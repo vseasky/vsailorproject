@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>937</width>
+    <width>834</width>
     <height>679</height>
    </rect>
   </property>
@@ -630,7 +630,7 @@
                    <rect>
                     <x>0</x>
                     <y>0</y>
-                    <width>769</width>
+                    <width>640</width>
                     <height>201</height>
                    </rect>
                   </property>
@@ -1589,7 +1589,7 @@
                     <rect>
                      <x>0</x>
                      <y>0</y>
-                     <width>345</width>
+                     <width>281</width>
                      <height>382</height>
                     </rect>
                    </property>
@@ -1630,7 +1630,7 @@
                     <rect>
                      <x>0</x>
                      <y>0</y>
-                     <width>345</width>
+                     <width>280</width>
                      <height>382</height>
                     </rect>
                    </property>
@@ -1840,7 +1840,7 @@ p, li { white-space: pre-wrap; }
 &lt;h1 align=&quot;center&quot; style=&quot; margin-top:40px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'Helvetica Neue','Helvetica','Arial','Lucida Grande','sans-serif'; font-size:11pt; font-weight:496; color:#000000;&quot;&gt;Seasky &lt;/span&gt;&lt;span style=&quot; font-family:'Helvetica Neue','Helvetica','Arial','Lucida Grande','sans-serif'; font-size:11pt; font-weight:496; color:#3cb9ff;&quot;&gt;SerialPort&lt;/span&gt;&lt;/h1&gt;&lt;/td&gt;&lt;/tr&gt;
 &lt;tr&gt;
 &lt;td style=&quot; vertical-align:top; padding-left:0; padding-right:0; padding-top:0; padding-bottom:20;&quot;&gt;
-&lt;h2 align=&quot;center&quot; style=&quot; margin-top:40px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'Helvetica Neue','Helvetica','Arial','Lucida Grande','sans-serif'; font-size:11pt; font-weight:600; color:#000000;&quot;&gt;欢迎使用SerialScope&lt;/span&gt;&lt;/h2&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;h2 align=&quot;center&quot; style=&quot; margin-top:40px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'Helvetica Neue','Helvetica','Arial','Lucida Grande','sans-serif'; font-size:11pt; font-weight:600; color:#000000;&quot;&gt;欢迎使用Sailor Project&lt;/span&gt;&lt;/h2&gt;&lt;/td&gt;&lt;/tr&gt;
 &lt;tr&gt;
 &lt;td style=&quot; vertical-align:top; padding-left:0; padding-right:0; padding-top:0; padding-bottom:20;&quot;&gt;
 &lt;table border=&quot;0&quot; style=&quot; margin-top:40px; margin-bottom:40px; margin-left:37px; margin-right:37px;&quot; cellspacing=&quot;2&quot; cellpadding=&quot;0&quot;&gt;
@@ -1885,7 +1885,7 @@ p, li { white-space: pre-wrap; }
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'Helvetica Neue','Helvetica','Arial','sans-serif'; font-size:11pt;&quot;&gt;声明:&lt;br /&gt;1. 本软件可被任何人自由地使用、分享。&lt;br /&gt;2. 软件作者不对因使用本软件造成的任何问题进行解答或释疑、不对因使用本软件造成的任何后果承担任何责任。&lt;br /&gt;3. 如您在使用过程中发现了软件相关的BUG，或者提出改进意见，可以发送电子邮件进行反馈。&lt;br /&gt;4. 本软件可能会读取您设备的部分信息，主要包括MAC地址，系统时间等，但是并不会上传数据到云端。&lt;br /&gt;5. 如果您不同意本声明，应该立即停止使用本软件。&lt;br /&gt;&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/td&gt;&lt;/tr&gt;
 &lt;tr&gt;
 &lt;td style=&quot; vertical-align:top; padding-left:0; padding-right:0; padding-top:0; padding-bottom:20;&quot;&gt;
-&lt;p align=&quot;center&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;a href=&quot;http://seaskyl.gitee.io/seaskymanual/seasky_works/serialportscope.html&quot;&gt;&lt;span style=&quot; font-family:'Helvetica Neue','Helvetica','Arial','sans-serif'; font-size:11pt; text-decoration: underline; color:#348eda;&quot;&gt;软件说明&lt;/span&gt;&lt;/a&gt;&lt;span style=&quot; font-family:'Helvetica Neue','Helvetica','Arial','sans-serif'; font-size:11pt;&quot;&gt; | &lt;/span&gt;&lt;a href=&quot;http://seaskyl.gitee.io/seaskymanual/seasky_works/serialportscope.html&quot;&gt;&lt;span style=&quot; font-family:'Helvetica Neue','Helvetica','Arial','sans-serif'; font-size:11pt; text-decoration: underline; color:#348eda;&quot;&gt;SerialScope V1.01&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;p align=&quot;center&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;a href=&quot;https://seasky-master.github.io/html/seasky_works/SailorProject/SailorProject.html&quot;&gt;&lt;span style=&quot; font-family:'Helvetica Neue','Helvetica','Arial','sans-serif'; font-size:11pt; text-decoration: underline; color:#348eda;&quot;&gt;软件说明&lt;/span&gt;&lt;/a&gt;&lt;span style=&quot; font-family:'Helvetica Neue','Helvetica','Arial','sans-serif'; font-size:11pt;&quot;&gt; | &lt;/span&gt;&lt;a href=&quot;https://github.com/SEASKY-Master/vSailorProject&quot;&gt;&lt;span style=&quot; font-family:'Helvetica Neue','Helvetica','Arial','sans-serif'; font-size:11pt; text-decoration: underline; color:#348eda;&quot;&gt;Sailor Project&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
 &lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:37px; margin-right:37px; -qt-block-indent:0; text-indent:0px; font-family:'Helvetica Neue','Helvetica','Arial','sans-serif'; font-size:11pt; color:#999999;&quot;&gt;&lt;br /&gt;&lt;/p&gt;&lt;/td&gt;
 &lt;td style=&quot; vertical-align:top;&quot;&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
@@ -1915,7 +1915,7 @@ p, li { white-space: pre-wrap; }
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>937</width>
+     <width>834</width>
      <height>26</height>
     </rect>
    </property>

@@ -32,7 +32,7 @@ vQWebEngineView::vQWebEngineView(QWidget *parent) : QWidget(parent)
     view = new QWebEngineView(vQWidget2);
     vQWidget2->setAutoFillBackground(true);
     //view->page()->settings()->setAttribute(QWebEngineSettings::ShowScrollBars,false);
-    view->load(QUrl("https://seaskyl.gitee.io/seaskymanual/seasky_works/serialportscope.html"));
+    view->load(QUrl("https://seasky-master.github.io/html/"));
     view->showMaximized();
     vQVBoxLayout->addWidget(vQWidget);
     vQVBoxLayout->addWidget(vQWidget2);
@@ -63,6 +63,7 @@ vQWebEngineView::vQWebEngineView(QWidget *parent) : QWidget(parent)
         }
         else
         {
+            view->load(QUrl("https://seasky-master.github.io/html/"));
             //此处可以加载本地说明文档
         }
     });
