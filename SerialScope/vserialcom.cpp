@@ -1,0 +1,42 @@
+﻿#include "vserialcom.h"
+
+vSerialCom::vSerialCom(QObject *parent) : QObject(parent)
+{
+    /*配置共享类的地址*/
+    this->vQObjectRxCtr.vSerialAddrSet(&this->vSerial);
+    this->vQObjectTxCtr.vSerialAddrSet(&this->vSerial);
+    this->vSeaskyPortCtr.vSerialAddrSet(&this->vSerial);
+    /***********************基础串口类***********************/
+    this->vSerial.setObjectName("vSerial");
+    this->vComThread.moveToThread(&this->vComThread);
+    this->vSerial.moveToThread(&this->vComThread);
+    this->vSerial.qSerial->moveToThread(&this->vComThread);
+    /***********************发送相关***********************/
+    this->vQObjectTxCtr.setObjectName("vSerialTx");
+    this->vTxThread.moveToThread(&this->vTxThread);
+    this->vQObjectTxCtr.moveToThread(&this->vTxThread);
+    /***********************接收相关***********************/
+    this->vQObjectRxCtr.setObjectName("vSerialRx");
+    this->vRxThread.moveToThread(&this->vRxThread);
+    this->vQObjectRxCtr.moveToThread(&this->vRxThread);
+    /***********************协议相关***********************/
+    this->vSeaskyPortCtr.setObjectName("Seasky");
+    this->vSeaskyThread.moveToThread(&this->vSeaskyThread);
+    this->vSeaskyPortCtr.moveToThread(&this->vSeaskyThread);
+    //开启四个线程
+    this->vComThread.start();
+    this->vTxThread.start();
+    this->vRxThread.start();
+    this->vSeaskyThread.start();
+}
+vSerialCom::~vSerialCom(void)
+{
+    this->vTxThread.exit();
+    this->vTxThread.wait();
+    this->vRxThread.exit();
+    this->vRxThread.wait();
+    this->vSeaskyThread.exit();
+    this->vSeaskyThread.wait();
+    this->vComThread.exit();
+    this->vComThread.wait();
+}

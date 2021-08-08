@@ -1,0 +1,143 @@
+﻿/*简约蓝色主题
+  创建者:Seasky
+  时间:2021-7-24
+*/
+
+MainWindow
+{
+    background-color:#1296db/*#FFFFFF*//*#00BFFF*/;
+    border:1px solid #CCCCCC;
+    font-weight: bold;
+}
+QMenuBar::item{
+    color:black;
+    background-color:#FFFFFF;
+    margin:0px;
+    padding:3px 10px;
+}
+QMenu,QMenuBar,
+QMenu:disabled,QMenuBar:disabled{
+    color:black;
+    background-color:#FFFFFF;
+    border:1px solid #CCCCCC;
+    margin:0px;
+}
+QMenu::item:selected,
+QMenuBar::item:selected{
+    color:white;
+    border:1px solid #CCCCCC;
+    background:#0099FF;
+}
+/*分割线*/
+QMenu::separator{
+    height:1px;
+    background:#CCCCCC;
+}
+QMenu::item{
+    padding:3px 24px;
+}
+
+QTabBar::tab{
+    border:1px solid #CCCCCC;
+    color:black;
+    margin:0px;
+    background:qlineargradient(spread:pad,x1:0,y1:0,x2:0,y2:1,stop:0 #F6F6F6,stop:1 #F6F6F6);
+}
+
+/*选中时的上标颜色*/
+QTabBar::tab:selected,QTabBar::tab:hover{
+    border-style:solid;
+    border-color:#6666FF;
+    background:#00BBFF;
+}
+
+QTabBar::tab:top,QTabBar::tab:bottom{
+    padding:3px 8px 3px 8px;
+}
+
+QTabBar::tab:left,QTabBar::tab:right{
+    padding:8px 3px 8px 3px;
+}
+
+QTabBar::tab:top:selected,QTabBar::tab:top:hover{
+    border-width:2px 0px 0px 0px;
+}
+
+QTabBar::tab:right:selected,QTabBar::tab:right:hover{
+    border-width:0px 0px 0px 2px;
+}
+
+QTabBar::tab:bottom:selected,QTabBar::tab:bottom:hover{
+    border-width:0px 0px 2px 0px;
+}
+
+QTabBar::tab:left:selected,QTabBar::tab:left:hover{
+border-width:0px 2px 0px 0px;
+}
+
+QTabBar::tab:first:top:selected,QTabBar::tab:first:top:hover,QTabBar::tab:first:bottom:selected,QTabBar::tab:first:bottom:hover{
+    border-left-width:1px;
+    border-left-color:#CCCCCC;
+}
+
+QTabBar::tab:first:left:selected,QTabBar::tab:first:left:hover,QTabBar::tab:first:right:selected,QTabBar::tab:first:right:hover{
+    border-top-width:1px;
+    border-top-color:#CCCCCC;
+}
+QTabBar::tab:last:top:selected,QTabBar::tab:last:top:hover,QTabBar::tab:last:bottom:selected,QTabBar::tab:last:bottom:hover{
+    border-right-width:1px;
+    border-right-color:#CCCCCC;
+}
+QTabBar::tab:last:left:selected,QTabBar::tab:last:left:hover,QTabBar::tab:last:right:selected,QTabBar::tab:last:right:hover{
+    border-bottom-width:1px;
+    border-bottom-color:#CCCCCC;
+}
+
+QComboBox{
+    background-color:#66CCFF;
+/*    background-color:#00FFFF;*/
+}
+QAbstractItemView {
+    min-width:224px;
+    outline:0px;
+    border:1px solid #CCCCCC;
+}
+QAbstractItemView::item {
+    height:24px;
+    margin:3px;
+    background-color:#FFFFFF;
+    color:#333;
+}
+QAbstractItemView::item:hover{
+    background-color:#0099FF;
+}
+QComboBox::drop-down{
+    subcontrol-origin: padding;
+    subcontrol-position: top right;
+}
+.QPushButton
+{
+    background-color:#66CCFF;
+}
+.QLineEdit
+{
+    background-color:#66CCFF;
+}
+.QGroupBox{
+    background-color:#FFFFFF;
+}
+QPlainTextEdit
+{
+    color:/*#FF0033*//*#009933*/#33CC99/*#33CC33*/ /*#FFCC33*/;
+    background-color:#FFFFFF;
+    font-weight: bold;
+}
+QTextEdit
+{
+    color:#0099FF;
+    background-color:#FFFFFF;
+    font-weight: bold;
+}
+
+
+

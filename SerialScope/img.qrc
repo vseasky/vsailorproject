@@ -1,0 +1,17 @@
+<RCC>
+    <qresource prefix="/image">
+        <file>image/rightLed.png</file>
+        <file>image/open0.png</file>
+        <file>image/open1.png</file>
+        <file>image/open2.png</file>
+        <file>image/v3d1.png</file>
+        <file>image/v3d2.png</file>
+        <file>image/v3d0.png</file>
+        <file>image/v3d3.png</file>
+        <file>image/main.ico</file>
+        <file>vModel/plane.obj</file>
+    </qresource>
+    <qresource prefix="/qss">
+        <file>vQss/vQss.css</file>
+    </qresource>
+</RCC>
