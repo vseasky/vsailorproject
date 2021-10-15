@@ -1,0 +1,160 @@
+﻿/*简约深色主题
+  创建者:今天吃红烧鱼
+  时间:2021-9-29
+*/
+
+MainWindow
+{
+    background-color:#2e2e2e/*#FFFFFF*//*#00BFFF*/;
+    border:1px solid #666464;
+    font-weight: bold;
+}
+
+.QWidget{
+    background-color:#505050/*#FFFFFF*//*#00BFFF*/;
+    border:#3a3a3a;
+} 
+
+QMenuBar::item{
+    color:black;
+    background-color:#FFFFFF;
+    margin:0px;
+    padding:3px 10px;
+}
+QMenu,QMenuBar,
+QMenu:disabled,QMenuBar:disabled{
+    color:black;
+    background-color:#FFFFFF;
+    border:1px solid #CCCCCC;
+    margin:0px;
+}
+QMenu::item:selected,
+QMenuBar::item:selected{
+    color:white;
+    border:1px solid #CCCCCC;
+    background:#0099FF;
+}
+/*分割线*/
+QMenu::separator{
+    height:1px;
+    background:#494242;
+}
+QMenu::item{
+    padding:3px 24px;
+}
+
+QTabBar::tab{
+    border:1px solid #929292;
+    color:rgb(255, 255, 255);
+    margin:0px;
+    background:qlineargradient(spread:pad,x1:0,y1:0,x2:0,y2:1,stop:0 #505050,stop:1 #505050);
+}
+
+/*选中时的上标颜色*/
+QTabBar::tab:selected,QTabBar::tab:hover{
+    border-style:solid;
+    border-color:#e2fd47;
+    background:#272727;
+}
+
+QTabBar::tab:top,QTabBar::tab:bottom{
+    padding:3px 8px 3px 8px;
+}
+
+QTabBar::tab:left,QTabBar::tab:right{
+    padding:8px 3px 8px 3px;
+}
+
+QTabBar::tab:top:selected,QTabBar::tab:top:hover{
+    border-width:2px 0px 0px 0px;
+}
+
+QTabBar::tab:right:selected,QTabBar::tab:right:hover{
+    border-width:0px 0px 0px 2px;
+}
+
+QTabBar::tab:bottom:selected,QTabBar::tab:bottom:hover{
+    border-width:0px 0px 2px 0px;
+}
+
+QTabBar::tab:left:selected,QTabBar::tab:left:hover{
+border-width:0px 2px 0px 0px;
+}
+
+QTabBar::tab:first:top:selected,QTabBar::tab:first:top:hover,QTabBar::tab:first:bottom:selected,QTabBar::tab:first:bottom:hover{
+    border-left-width:1px;
+    border-left-color:#CCCCCC;
+}
+
+QTabBar::tab:first:left:selected,QTabBar::tab:first:left:hover,QTabBar::tab:first:right:selected,QTabBar::tab:first:right:hover{
+    border-top-width:1px;
+    border-top-color:#CCCCCC;
+}
+QTabBar::tab:last:top:selected,QTabBar::tab:last:top:hover,QTabBar::tab:last:bottom:selected,QTabBar::tab:last:bottom:hover{
+    border-right-width:1px;
+    border-right-color:#CCCCCC;
+}
+QTabBar::tab:last:left:selected,QTabBar::tab:last:left:hover,QTabBar::tab:last:right:selected,QTabBar::tab:last:right:hover{
+    border-bottom-width:1px;
+    border-bottom-color:#CCCCCC;
+}
+
+QComboBox{
+    background-color:#8e9aa0;
+/*    background-color:#00FFFF;*/
+}
+QAbstractItemView {
+    min-width:224px;
+    outline:0px;
+    border:1px solid #8a8949;
+    background-color:#272727;
+    /* color:rgb(224, 224, 224); */
+}
+QAbstractItemView::item {
+    height:24px;
+    margin:3px;
+    background-color:#272727;
+    color:rgb(224, 224, 224);
+}
+QAbstractItemView::item:selected {
+    height:24px;
+    margin:3px;
+    background-color:#0f1a53;
+    color:rgb(224, 224, 224);
+}
+QAbstractItemView::item:hover{
+    background-color:#0f1a53;
+    color:rgb(224, 224, 224);
+}
+QComboBox::drop-down{
+    subcontrol-origin: padding;
+    subcontrol-position: top right;
+}
+.QPushButton
+{
+    background-color:#495f6b;
+    color:rgb(224, 224, 224);
+}
+.QLineEdit
+{
+    background-color:#495f6b;
+    color:rgb(224, 224, 224);
+}
+.QGroupBox{
+    background-color:#495f6b;
+}
+QPlainTextEdit
+{
+    color:/*#FF0033*//*#009933*/#33CC99/*#33CC33*/ /*#FFCC33*/;
+    background-color:#555555;
+    font-weight: bold;
+}
+QTextEdit
+{
+    color:#5a5b5c;
+    background-color:#555555;
+    font-weight: bold;
+}
+
+
+

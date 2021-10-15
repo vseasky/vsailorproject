@@ -5,7 +5,8 @@ int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
     MainWindow w;
-    QFile file(":/qss/vQss/vQss.css");
+    // QFile file(":/qss/vQss/vQss.css");
+    QFile file(":/qss/vQss/vQss_black.css"); // 黑色主题
     if (file.open(QFile::ReadOnly))
     {
         QTextStream filetext(&file);

@@ -13,5 +13,6 @@
     </qresource>
     <qresource prefix="/qss">
         <file>vQss/vQss.css</file>
+        <file>vQss/vQss_black.css</file>
     </qresource>
 </RCC>
