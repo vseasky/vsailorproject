@@ -1,6 +1,8 @@
-﻿# SerialScope Plus
-- 程序打包命令 `windeployqt`
+﻿## 使用 `GPL` 开源协议,严禁用于商业用途
 
+
+# SerialScope Plus
+- 程序打包命令 `windeployqt`
 
 # 提示
 
