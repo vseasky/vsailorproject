@@ -15,10 +15,10 @@
 #include <QDebug>
 typedef struct
 {
-    QString * vQString; //float转str数据
-    QString * vName;    //数据名称
-    QString * vUnit;    //单位名称
-    float   * vFloat;   //float数据
+    QString * vQString = nullptr; //float转str数据
+    QString * vName = nullptr;    //数据名称
+    QString * vUnit = nullptr;    //单位名称
+    float   * vFloat = nullptr;   //float数据
 
     quint16   vCmdId;   //CMD ID
     quint16   vReg;     //16位寄存器
@@ -31,7 +31,7 @@ class vSeaskyPort : public QObject
 public:
     explicit vSeaskyPort(QWidget *parent = nullptr);
     /*------------串口基础类，必须初始化------------*/
-    vSerialPort   *vSerial;
+    vSerialPort   *vSerial = nullptr;
     void vSerialAddrSet(vSerialPort   *vSerial_t)
     {
         vSerial = vSerial_t;
@@ -41,8 +41,8 @@ public:
     void vDisConnectRx(void);
     void vConnectTx(void);
     void vDisConnectTx(void);
-    QWidget        * vTxEdit;
-    QWidget        * vRxEdit;
+    QWidget        * vTxEdit = nullptr;
+    QWidget        * vRxEdit = nullptr;
     vSeaskyData vRxSeasky;
     vSeaskyData vTxSeasky;
 
@@ -58,7 +58,7 @@ public:
     QTimer    vQTimer;
     qint32    timerCntSet=100;
     uint16_t rx_pos=0,thisLength=0;
-    vPlainTextEdit * vPlainEdit;
+    vPlainTextEdit * vPlainEdit = nullptr;
     //用于协议发送计时器
     QTimer    vQTimerTx;
     qint32    vQtimerTxCnt=100;

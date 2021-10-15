@@ -8,13 +8,13 @@ class vQLineEditHex : public QLineEdit
     Q_OBJECT
 public:
     explicit vQLineEditHex(QWidget *parent = nullptr);
-    bool * hexEnable;
+    bool * hexEnable = nullptr;
     //选中群发
     bool   isTxEnable;//是否被选中
     qint32 QLineId;
 
-    QByteArray * TextTxBuff;
-    QValidator * validator;
+    QByteArray * TextTxBuff = nullptr;
+    QValidator * validator  = nullptr;
     void setHexEnableAddr(bool * addr);
     void setTextTxBuffAddr(QByteArray * addr);
 public slots:

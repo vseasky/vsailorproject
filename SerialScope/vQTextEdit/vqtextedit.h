@@ -9,7 +9,7 @@ class vQTextEdit : public QTextEdit
 public:
     explicit vQTextEdit(QWidget *parent = nullptr);
     QByteArray  TextTxBuff;
-    bool * hexEnable;//连接到外部的hex发送控制，指针赋值，只需修改总控
+    bool * hexEnable = nullptr;//连接到外部的hex发送控制，指针赋值，只需修改总控
     void setHexEnableAddr(bool * addr);
     void hexTextLimit(const QString & hexStr);
 public slots:

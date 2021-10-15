@@ -16,7 +16,7 @@ public:
     explicit vQObjectRx(QObject *parent = nullptr);
     ~vQObjectRx(void);
     /*------------串口基础类，必须初始化------------*/
-    vSerialPort   *vSerial;
+    vSerialPort   *vSerial = nullptr;
     void vSerialAddrSet(vSerialPort   *vSerial_t)
     {
         vSerial = vSerial_t;

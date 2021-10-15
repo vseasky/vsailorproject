@@ -15,7 +15,7 @@ public slots:
 protected:
     void resizeEvent(QResizeEvent *);
 private:
-    QWebEngineView* view;
+    QWebEngineView* view = nullptr;
 signals:
 
 };

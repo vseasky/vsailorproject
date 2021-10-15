@@ -10,7 +10,7 @@
 #include <QMapIterator>
 #include <vopenglwidget.h>
 #include <QString>
-
+#include <vtcpctr.h>
 /*后续考虑加入Linux的支持*/
 #define WinDownVersion
 
@@ -36,11 +36,18 @@ class MainWindow : public QMainWindow
 public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
+    QTextEdit          * vLinuxTextEdit;
     //LineEdit数据地址，以及选中标志
     vOpenGlWidget      vOpenGlWidget;
     QByteArray         * LineEditData;  //提供数据原始地址 使用NEW创建
     QMap<qint32,bool*> * LineEditMap;   //提供可查询的是否发送标志
     qint32             MultPleMaxCnt;
+
+    QByteArray         * vTcpLineEditData;//提供数据原始地址 使用NEW创建
+    QMap<qint32,bool*> * vTcpLineEditMap; //提供可查询的是否发送标志
+    qint32             TcpMaxCnt;
+
+    QByteArray         * vLinuxData;//提供数据原始地址 使用NEW创建
     //基础功能的串口类
     vSerialCom    vSerialCtr;
     bool          rxModeCfg = false;//是否使能协议
@@ -48,7 +55,12 @@ public:
     //电脑信息
     vCafesClient  vCafes;
 
+    //TCP支持
+    vTcpCtr vServerTcp;
+
     QTimer vRxTxInfoTimer;
+
+    QTimer vTxTcpTimer;
     /*----------------串口插拔检测-----------------*/
 #ifdef WinDownVersion
     void vWindownInit(void);
@@ -65,10 +77,11 @@ public:
     void vUpdateSerial(void);   //4.初始化串口设备更新支持
     void vInitSerialTx(void);   //5.加载信息发送配置
     void vInitSerialRx(void);   //6.加载信息接收配置
-    void vInfoChangedInit(void);    //7.串口信息更新，只需要初始化一次
+    void vInfoChangedInit(void);//7.串口信息更新，只需要初始化一次
     void vInitSeasky(void);     //8.串口协议初始化
     void vInitControl(void);    //9.加载控件列表->8个按钮
     void vShowTimerCfg();       //10.初始化定时器
+
     /*-------------------------------------------*/
     void readSerialChange(void);//读取选中串口
     void SerialOpen(void);      //打开串口
@@ -84,8 +97,16 @@ public:
     //获取路径中需要的文件列表
     QStringList vGetFilrName(const QString &strPath,
                          const QStringList &filters);
+    /*TCP协议支持*/
+    void vTcpServerInit(void);
+    void vTcpListCfg(void);
+    void vTcpListCfg(int index);
+    void vTxInfosInit(qint32 MultPleNum);
+    void vServerLinuxCfg(void);
+
 
 public slots:
+    void vSaveTcpRxText(void);
     /*----------------保存显示数据------------------*/
     void vSaveRxText(void);         //保存接收窗口
     void vSaveRxSeaskyText(void);   //保存协议接收窗口
@@ -109,18 +130,39 @@ public slots:
     void vSaveModule(void);           //保存SEASKY协议模块数据
     /*-------------------------------------------*/
     void vImportLineText(QString str);//导入Csv数据配置
+    void vImportTcpText(QString str);
     /*-------------------------------------------*/
     void vTabTimerCfg(void);
 
     void vTxError(void);
 
     void vSerialStatusCheck(void);
+
+    void vTcpHexEnableCfg(void);
+    void vTcpServerChanged(qint16 index_t);
+    void vTcpTimerCfg(void);
+    void vTcpTxModeCfg(void);
+    void vTcpWrite(const QByteArray &str);
+    void vTcpCfgUpdata(void);
+    void vTxTcpStampCfg(void);
+protected:
+    bool eventFilter(QObject *target, QEvent *event) override;
 signals:
     void plaintextEditShowOne(void);
+    void vhexRxShowOne(void);
     void lineEditTxOne(qint32 num);
     void txHexEnableChanged(void);
+    void txServerHexChanged(void);
     void vOpenSerial(bool & isOpen);
     void vCloseSerial(void);
+
+    void vTxTimerCntSet(qint32 index_t);
+    void vTxTimerStart(void);
+    void vTxTimerStop(void);
+    void vMapUpdata(void);
+    void vMapTcpUpdata(void);
+    void vWriteData(const QByteArray &str);
+    void vLinuxShow(void);
 protected:
     void closeEvent(QCloseEvent *event);
     void doCritical(const QString &str);

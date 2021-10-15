@@ -14,7 +14,9 @@ LIBS += -lOpengl32 \
 
 # 支持OpenGL
 DEFINES += QCUSTOMPLOT_USE_OPENGL\
-           QT_DEPRECATED_WARNINGS
+           QT_DEPRECATED_WARNINGS \
+           VDEBUG_OPEN \
+           HTML_PLAIN_TEXT
 # The following define makes your compiler emit warnings if you use
 # any Qt feature that has been marked deprecated (the exact warnings
 # depend on your compiler). Please consult the documentation of the
@@ -30,6 +32,8 @@ DEFINES += QCUSTOMPLOT_USE_OPENGL\
 SOURCES += \
     main.cpp \
     mainwindow.cpp \
+    vAnsiBash/vansibash.cpp \
+    vCsv/CSVHelper.cpp \
     vSerialPortCfg/vcodeconverter.cpp \
     vSerialPortCfg/vqserialrxthread.cpp \
     vSerialPortCfg/vqserialtxthread.cpp \
@@ -51,11 +55,19 @@ SOURCES += \
     vSeaskyPort/Protocol/CRC_Protocol/bsp_crc8.cpp \
     vSeaskyPort/Protocol/bsp_protocol.cpp \
     vSeaskyPort/vseaskyport.cpp \
+    vTcp/vserverthread.cpp \
+    vTcp/vtcpctr.cpp \
     vcafesclient.cpp \
-    vserialcom.cpp
+    vqtexteditline.cpp \
+    vserialcom.cpp  \
+    vDebug/vdebug.cpp \
+    vTcp/vqtcpserver.cpp \
+    vTcp/vqtcpsocket.cpp \
 
 HEADERS += \
     mainwindow.h \
+    vAnsiBash/vansibash.h \
+    vCsv/CSVHelper.h \
     vSerialPortCfg/vcodeconverter.h \
     vSerialPortCfg/vqserialrxthread.h \
     vSerialPortCfg/vqserialtxthread.h \
@@ -78,8 +90,14 @@ HEADERS += \
     vSeaskyPort/Protocol/CRC_Protocol/bsp_crc8.h \
     vSeaskyPort/Protocol/bsp_protocol.h \
     vSeaskyPort/vseaskyport.h \
+    vTcp/vserverthread.h \
+    vTcp/vtcpctr.h \
     vcafesclient.h \
-    vserialcom.h
+    vqtexteditline.h \
+    vserialcom.h \
+    vDebug/vdebug.h \
+    vTcp/vqtcpserver.h \
+    vTcp/vqtcpsocket.h \
 
 INCLUDEPATH +=./vQtConfig \
               ./vPlainTextEdit \
@@ -91,7 +109,11 @@ INCLUDEPATH +=./vQtConfig \
               ./vQWebEngineView\
               ./vQTextBrowserHtml\
               ./vSerialPortCfg  \
-              ./vSeaskyPort
+              ./vSeaskyPort \
+              ./vTcp \
+              ./vDebug\
+              ./vAnsiBash\
+              ./vCsv
 
 
 FORMS += \

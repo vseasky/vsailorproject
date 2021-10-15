@@ -7,7 +7,7 @@ MainWindow
 {
     background-color:#2e2e2e/*#FFFFFF*//*#00BFFF*/;
     border:1px solid #666464;
-    font-weight: bold;
+    font-weight: normal;
 }
 
 .QWidget{
@@ -108,7 +108,7 @@ QAbstractItemView {
     outline:0px;
     border:1px solid #8a8949;
     background-color:#272727;
-    /* color:rgb(224, 224, 224); */
+     color:rgb(224, 224, 224);
 }
 QAbstractItemView::item {
     height:24px;
@@ -143,18 +143,21 @@ QComboBox::drop-down{
 .QGroupBox{
     background-color:#495f6b;
 }
+.vPlainTextEdit
+{
+    color:rgb(224, 224, 224);
+    background-color:#555555;
+    font-weight: normal;
+}
 QPlainTextEdit
 {
-    color:/*#FF0033*//*#009933*/#33CC99/*#33CC33*/ /*#FFCC33*/;
+    color:rgb(224, 224, 224);
     background-color:#555555;
-    font-weight: bold;
+    font-weight: normal;
 }
 QTextEdit
 {
-    color:#5a5b5c;
+    color:#FF4500;
     background-color:#555555;
-    font-weight: bold;
+    font-weight: normal;
 }
-
-
-

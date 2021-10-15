@@ -14,6 +14,8 @@ bool checkHexChar(char ch)
 }
 vQTextEdit::vQTextEdit(QWidget *parent) : QTextEdit(parent)
 {
+    //禁用富文本输入
+    this->setAcceptRichText(false);
     connect(this,&QTextEdit::textChanged,this,&vQTextEdit::vTextChanged);
 }
 //使用前必须绑定此地址

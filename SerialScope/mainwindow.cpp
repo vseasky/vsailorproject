@@ -10,6 +10,9 @@
 #include <QResizeEvent>
 #include <vopenglwidget.h>
 #include <QFileDialog>
+#include <vqtexteditline.h>
+#include "vansibash.h"
+#include "CSVHelper.h"
 #include <QDebug>
 
 #ifdef WinDownVersion
@@ -21,13 +24,16 @@ const qint32 vTimerRxPlainText   = 100;
 const qint32 vTimerRxPlainSeasky = 100;
 const qint32 vTimerRxSeasky      = 100;
 const qint32 vTimerRxScope       = 75;
-
+const qint32 vTimerRxPlainServer = 100;
+const qint16  TcpServerMutipSendNum = 200;//串口调试助手多条发送模式条目数量
 const qint16  SerialMutipSendNum = 200;//串口调试助手多条发送模式条目数量
+const qint16  SerialLinuxNum     = 25;
 const qint32  SerialTxTimerCfg   = 100;//默认串口发送周期，可以通过spinBox调整
 const qint32  SeaskyPortNum      = 24; //最大支持的FLOAT数据长度
 const qint32  Utf8MaxLen         = 10+SeaskyPortNum*4;
 const qint32  SeaskyTimer        = 100;//协议窗口数据刷新频率
 const QString FindSerialCommand  = "SerialCommand";
+const QString FindTcpCommand     = "TcpCommand";
 /*Seaky 协议使用相关数据*/
 QString vRxQString[SeaskyPortNum];
 QString vRxName[SeaskyPortNum];
@@ -86,16 +92,21 @@ MainWindow::MainWindow(QWidget *parent)
     vInitControl();//设置控件
     //10.配置刷新相关的定时器
     vShowTimerCfg();
-    //
+    //TCP相关，2021/9/9日新增
+    vTcpServerInit();
+
     vReadSettings();
     /*更新一次界面显示*/
     vUpdateShow();
+
+    vTcpCfgUpdata();
     //保存数据
     connect(ui->pushButtonRx1,&QPushButton::released,
             this,&MainWindow::vSaveRxText);
     connect(ui->pushButton_2,&QPushButton::released,
             this,&MainWindow::vSaveRxSeaskyText);
     vStatusbarCfg();
+
     qDebug()<<"main tid:MainWindow"<< QThread::currentThreadId();
 }
 //析构函数
@@ -115,6 +126,12 @@ MainWindow::~MainWindow()
 //退出事件->读取存储配置
 void MainWindow::closeEvent(QCloseEvent *event)
 {
+    /*先关闭服务器相关的内容，再关闭程序*/
+    //TCP如果不关闭就退出会报异常退出，TCP关闭时会触发断开连接信号，
+    //如果绑定了该信号，断开时触发的信号也会导致异常退出
+    this->vServerTcp.vServerTcpCtr.vServerTcp.vDisEnConnect();
+    this->vServerTcp.vServerTcpCtr.vServerTcp.vCloseServer();
+
     vWriteSettings();
     event->accept();
 }
@@ -204,7 +221,7 @@ void MainWindow::vLineEditShowInit(qint32 MultPleNum)
     vQlineEdit->setMinimumSize(0,24);
     vQlineEdit->setMaximumSize(16777215,24);
     vQlineEdit->setStyleSheet("background-color:#FFFFFF;"
-                              "color:#0099FF;");
+                              "color:#FF4500;");
     vpushButton->setMinimumSize(48,24);
     vpushButton->setMaximumSize(48,24);
     vQHBoxLayout->addWidget(vPathButton);
@@ -244,7 +261,7 @@ void MainWindow::vLineEditShowInit(qint32 MultPleNum)
         vlineEdit->setMinimumSize(0,24);
         vlineEdit->setMaximumSize(16777215,24);
         vlineEdit->setStyleSheet("background-color:#FFFFFF;"
-                                 "color:#0099FF;");
+                                 "color:#FF4500;");
         //设置窗口ID
         vlineEdit->QLineId = i+1;
         //初始化是否被选中
@@ -267,7 +284,6 @@ void MainWindow::vLineEditShowInit(qint32 MultPleNum)
                 &MainWindow::txHexEnableChanged,
                 vlineEdit,
                 &vQLineEditHex::hexEnableChanged);
-
         //绑定信号与槽，更新是否使能发送
         connect(vcheckBox,&QCheckBox::released,[=]()
         {
@@ -280,6 +296,17 @@ void MainWindow::vLineEditShowInit(qint32 MultPleNum)
         });
         //map查表
         LineEditMap->insert(i+1,&vlineEdit->isTxEnable);
+        connect(this,&MainWindow::vMapUpdata,[=]()
+        {
+            if(LineEditData[i].size()>0)
+            {
+                vcheckBox->setChecked(*LineEditMap->find(i+1).value());
+            }
+            else
+            {
+                *LineEditMap->find(i+1).value() = false;
+            }
+        });
     }
     ui->scrollAreaWidgetContents->setLayout(vQVBoxLayout);
     //触发LineEdit发送
@@ -408,7 +435,6 @@ bool MainWindow::nativeEvent(const QByteArray &eventType, void *message, long *r
 //3.串口设置内容初始化，波特率等
 void MainWindow::vUpdateComInfo(void)
 {
-
     /*comboBoxCom1相关字符需要从设备读取*/
 
     /*comboBox配置波特率*/
@@ -567,22 +593,30 @@ void MainWindow::vInitSerialTx(void)
     //根据选择内容清空对应发送数据
     connect(ui->pushButtonTx2,&QPushButton::released,[=]()
     {
-        if(!ui->checkBox_1->isChecked())
+        switch(ui->tabWidget->currentIndex())
         {
-            ui->plainTextTx->TextTxBuff.clear();
-            //更新显示
-            emit txHexEnableChanged();
-        }
-        else
-        {
-            for(qint16 i=0;i<this->MultPleMaxCnt;i++)
+            case 0:
             {
-                LineEditData[i].clear();
-            }
-            //更新显示
-            emit txHexEnableChanged();
+                ui->plainTextTx->TextTxBuff.clear();
+                //更新显示
+                emit txHexEnableChanged();
+            }break;
+            case 1:
+            {
+                for(qint16 i=0;i<this->MultPleMaxCnt;i++)
+                {
+                    LineEditData[i].clear();
+                }
+                //更新显示
+                emit txHexEnableChanged();
+            }break;
+            case 2:
+            {
+
+            }break;
         }
     });
+    vServerLinuxCfg();
 }
 
 //6.加载信息接收配置
@@ -615,35 +649,47 @@ void MainWindow::vInfoChangedInit(void)
 //                ui->comboBoxCom1->currentData().toString();
 //    });
     //串口波特率
+    this->vSerialCtr.vSerial.vSerialConfig->vSerialBaudRate =
+            ui->comboBoxCom2->currentData().toInt();
     connect(ui->comboBoxCom2,&QComboBox::currentTextChanged,[=]()
     {
         this->vSerialCtr.vSerial.vSerialConfig->vSerialBaudRate =
                 ui->comboBoxCom2->currentData().toInt();
     });
     //串口数据位
+    this->vSerialCtr.vSerial.vSerialConfig->vSerialStopBits =
+            QSerialPort::StopBits(ui->comboBoxCom3->currentData().toInt());
     connect(ui->comboBoxCom3,&QComboBox::currentTextChanged,[=]()
     {
         this->vSerialCtr.vSerial.vSerialConfig->vSerialStopBits =
                 QSerialPort::StopBits(ui->comboBoxCom3->currentData().toInt());
     });
+    this->vSerialCtr.vSerial.vSerialConfig->vSerialDataBits =
+            QSerialPort::DataBits(ui->comboBoxCom4->currentData().toInt());
     connect(ui->comboBoxCom4,&QComboBox::currentTextChanged,[=]()
     {
         this->vSerialCtr.vSerial.vSerialConfig->vSerialDataBits =
                 QSerialPort::DataBits(ui->comboBoxCom4->currentData().toInt());
     });
     //串口极性
+    this->vSerialCtr.vSerial.vSerialConfig->vSerialParrity  =
+            QSerialPort::Parity(ui->comboBoxCom5->currentData().toInt());
     connect(ui->comboBoxCom5,&QComboBox::currentTextChanged,[=]()
     {
         this->vSerialCtr.vSerial.vSerialConfig->vSerialParrity  =
                 QSerialPort::Parity(ui->comboBoxCom5->currentData().toInt());
     });
     //串口编码格式
+    *this->vSerialCtr.vSerial.vCodeConver =
+            vSerialCodeModeEnum(ui->comboBoxCom6->currentData().toInt());
     connect(ui->comboBoxCom6,&QComboBox::currentTextChanged,[=]()
     {
         *this->vSerialCtr.vSerial.vCodeConver =
                 vSerialCodeModeEnum(ui->comboBoxCom6->currentData().toInt());
     });
     //串口流控
+    this->vSerialCtr.vSerial.vSerialConfig->vSerialFlowControl =
+            QSerialPort::FlowControl(ui->comboBoxCom7->currentData().toInt());
     connect(ui->comboBoxCom7,&QComboBox::currentTextChanged,[=]()
     {
         this->vSerialCtr.vSerial.vSerialConfig->vSerialFlowControl =
@@ -868,11 +914,11 @@ void MainWindow::vShowTimerCfg(void)
 //读取串口配置
 void MainWindow::readSerialChange(void)
 {
-    this->vSerialCtr.vSerial.vSerialConfig->vSerialPortName = ui->comboBoxCom1->currentData().toString();
-    this->vSerialCtr.vSerial.vSerialConfig->vSerialBaudRate = ui->comboBoxCom2->currentData().toInt();
-    this->vSerialCtr.vSerial.vSerialConfig->vSerialStopBits = QSerialPort::StopBits(ui->comboBoxCom3->currentData().toInt());
-    this->vSerialCtr.vSerial.vSerialConfig->vSerialDataBits = QSerialPort::DataBits(ui->comboBoxCom4->currentData().toInt());
-    this->vSerialCtr.vSerial.vSerialConfig->vSerialParrity  = QSerialPort::Parity(ui->comboBoxCom5->currentData().toInt());
+    this->vSerialCtr.vSerial.vSerialConfig->vSerialPortName    = ui->comboBoxCom1->currentData().toString();
+    this->vSerialCtr.vSerial.vSerialConfig->vSerialBaudRate    = ui->comboBoxCom2->currentData().toInt();
+    this->vSerialCtr.vSerial.vSerialConfig->vSerialStopBits    = QSerialPort::StopBits(ui->comboBoxCom3->currentData().toInt());
+    this->vSerialCtr.vSerial.vSerialConfig->vSerialDataBits    = QSerialPort::DataBits(ui->comboBoxCom4->currentData().toInt());
+    this->vSerialCtr.vSerial.vSerialConfig->vSerialParrity     = QSerialPort::Parity(ui->comboBoxCom5->currentData().toInt());
     this->vSerialCtr.vSerial.vSerialConfig->vSerialFlowControl = QSerialPort::FlowControl(ui->comboBoxCom7->currentData().toInt());
 }
 //打开串口设备
@@ -932,13 +978,13 @@ void MainWindow::vReadSettings(void)
     for(qint16 i=0;i<SerialMutipSendNum;i++)
     {
         LineEditData[i] = settings.value(QString("vLineText%1").arg(i+1),"").toByteArray();
+        *LineEditMap->find(i+1).value() = settings.value(QString("LineEditMap%1").arg(i+1),false).toBool();
     }
     ui->checkBox_1->setChecked(settings.value("vTxMultiple",false).toBool());
     ui->checkBox_2->setChecked(settings.value("vTxHexEn",false).toBool());
     ui->checkBox_3->setChecked(settings.value("vTxStamp",false).toBool());
     ui->spinBox->setValue(settings.value("TxTimerCnt",1).toInt());
     ui->spinBox_2->setValue(settings.value("TxSeaskyTimerCnt",1).toInt());
-
 
     /******************************恢复大部分数据******************************/
     QStringList list;
@@ -959,6 +1005,48 @@ void MainWindow::vReadSettings(void)
         {
             vModuleChanged(ui->comboBox->currentIndex());
         }
+    }
+
+    /*QTcpServer QComboBox*/
+    ui->comboBoxServer6->setCurrentIndex(settings.value("comboBoxServer6",0).toInt());
+    ui->comboBoxTcpL->setCurrentIndex(settings.value("comboBoxTcpL",0).toInt());
+
+    /*QTcpServer QCheckBox*/
+    ui->vSreverRxHex->setChecked(settings.value("vSreverRxHex",false).toBool());
+    ui->vSreverRxTim->setChecked(settings.value("vSreverRxTim",false).toBool());
+    ui->vTcpServerTxs->setChecked(settings.value("vTcpServerTxs",false).toBool());
+    ui->vTcpServerTxHex->setChecked(settings.value("vTcpServerTxHex",false).toBool());
+    ui->vTcpServeradd->setChecked(settings.value("vTcpServeradd",false).toBool());
+    /*QTcpServer QSpinBox*/
+    ui->vTcpServerTimCnt->setValue(settings.value("vTcpServerTimCnt",100).toInt());
+    ui->textEdit->TextTxBuff = settings.value("textEdit","").toByteArray();
+    //多条Tcp发送框
+    for(qint16 i=0;i<TcpServerMutipSendNum;i++)
+    {
+        this->vTcpLineEditData[i] = settings.value(QString("TcpServerLine%1").arg(i+1),"").toByteArray();
+        *vTcpLineEditMap->find(i+1).value() = settings.value(QString("vTcpLineEditMap%1").arg(i+1),false).toBool();
+    }
+    //记录个数
+    qint16 ServerCount = 0;
+    ServerCount = settings.value("ServerCount",0).toInt();
+    if(ui->comboBoxServer1->currentText()==QString::fromLocal8Bit("添加端口号"))
+    {
+        ui->comboBoxServer1->clear();
+        for(qint16 i=0;i<ServerCount;i++)
+        {
+            ui->comboBoxServer1->addItem(
+                        settings.value(QString("ServeritemText%1").arg(i),0).toString(),
+                        settings.value(QString("ServeritemData%1").arg(i),0).toInt());
+        }
+        ui->comboBoxServer1->addItem(QString::fromLocal8Bit("添加端口号"),0);
+    }
+    if(settings.value("ServerIndex",0).toInt()<ui->comboBoxServer1->count())
+    {
+        ui->comboBoxServer1->setCurrentIndex(settings.value("ServerIndex",0).toInt());
+    }
+    for(qint16 i=0;i<SerialLinuxNum;i++)
+    {
+        this->vLinuxData[i] = settings.value(QString("vLinuxData%1").arg(i+1),"").toByteArray();
     }
     settings.endGroup();
 }
@@ -987,6 +1075,7 @@ void MainWindow::vWriteSettings(void)
     for(qint16 i=0;i<SerialMutipSendNum;i++)
     {
         settings.setValue(QString("vLineText%1").arg(i+1),LineEditData[i]);
+        settings.setValue(QString("LineEditMap%1").arg(i+1),*LineEditMap->find(i+1).value());
     }
     settings.setValue("vTxMultiple",ui->checkBox_1->isChecked());
     settings.setValue("vTxHexEn",ui->checkBox_2->isChecked());
@@ -995,6 +1084,42 @@ void MainWindow::vWriteSettings(void)
     settings.setValue("TxTimerCnt",ui->spinBox->value());
     settings.setValue("TxSeaskyTimerCnt",ui->spinBox_2->value());
     settings.setValue("ModuleSelection",ui->comboBox->currentText());
+
+    /*QTcpServer QComboBox*/
+    settings.setValue("comboBoxServer6",ui->comboBoxServer6->currentIndex());
+    settings.setValue("comboBoxTcpL",ui->comboBoxTcpL->currentIndex());
+    /*QTcpServer QCheckBox*/
+    settings.setValue("vSreverRxHex",ui->vSreverRxHex->isChecked());
+    settings.setValue("vSreverRxTim",ui->vSreverRxTim->isChecked());
+    settings.setValue("vTcpServerTxs",ui->vTcpServerTxs->isChecked());
+    settings.setValue("vTcpServerTxHex",ui->vTcpServerTxHex->isChecked());
+    settings.setValue("vTcpServeradd",ui->vTcpServeradd->isChecked());
+    settings.setValue("vTcpServerTimCnt",ui->vTcpServerTimCnt->text());
+
+    //Tcp发送窗口的数据
+    settings.setValue("textEdit",ui->textEdit->TextTxBuff);
+    //多条Tcp发送框
+    for(qint16 i=0;i<TcpServerMutipSendNum;i++)
+    {
+        settings.setValue(QString("TcpServerLine%1").arg(i+1),vTcpLineEditData[i]);
+        settings.setValue(QString("vTcpLineEditMap%1").arg(i+1),*vTcpLineEditMap->find(i+1).value());
+    }
+    //记录个数
+    settings.setValue("ServerCount",ui->comboBoxServer1->count()-1);
+    for(qint16 i=0;i<ui->comboBoxServer1->count()-1;i++)
+    {
+        settings.setValue(QString("ServeritemText%1").arg(i),
+                          ui->comboBoxServer1->itemText(i));
+        settings.setValue(QString("ServeritemData%1").arg(i),
+                          ui->comboBoxServer1->itemData(i).toInt());
+    }
+    settings.setValue("ServerIndex",ui->comboBoxServer1->currentIndex());
+
+
+    for(qint16 i=0;i<SerialLinuxNum;i++)
+    {
+        settings.setValue(QString("vLinuxData%1").arg(i+1),vLinuxData[i]);
+    }
 
     settings.endGroup();
 }
@@ -1330,6 +1455,7 @@ void MainWindow::vTxModeTimerCfg(void)
 //同步窗口和变量数据
 void MainWindow::vUpdateShow(void)
 {
+    readSerialChange();
     //以下函数根据参数变化更新显示
     vRxSlotChanged();        //刷新接收槽函数连接
     vTxSlotChanged();        //刷新发送槽函数连接
@@ -1342,6 +1468,8 @@ void MainWindow::vUpdateShow(void)
     vTxModeCfg();            //发送模式切换处理
     vTxStampCfg();           //发送换行符控制
     vTxModeTimerCfg();       //发送的定时器控制
+    vMapUpdata();
+    emit vLinuxShow();
 }
 //刷新协议模块
 void MainWindow::vShowModule(qint16 index)
@@ -1405,7 +1533,6 @@ void MainWindow::vShowModule(qint16 index)
                                  QString("0")).toInt();
         settingsModule.endGroup();
         vPortShow();
-//      EnableModuleSave = true;
     }
 }
 //添加SEASKY协议模块
@@ -1437,8 +1564,6 @@ void MainWindow::vModuleAddItem(void)
     {
         ui->comboBox->setItemText(ui->comboBox->count()-1,str);
         ui->comboBox->addItem(QString::fromLocal8Bit("增加模块"));
-        vShowModule(ui->comboBox->currentIndex());
-        vSaveModule();
     }
     else if(!nohave)
     {
@@ -1562,6 +1687,10 @@ void MainWindow::vTabTimerCfg(void)
                 this->vSerialCtr.vSeaskyPortCtr.vQTimer.stop();
             }
         };break;//串口示波器界面
+        case 3:
+        {
+
+        }break;
         default:break;
     }
 }
@@ -1580,47 +1709,39 @@ void MainWindow::vImportLineText(QString str)
         }
         else
         {
-            //文本解析操作
-            QStringList list;
-            qint32      vFindCom = -1;
-            list.clear();
-            QTextStream csvStream(&vQfile);
-            //先读取一行
-            QString fileLine = csvStream.readLine();
-            list =  fileLine.split(",",
-                                  QString::SkipEmptyParts);
-            for(int j=0;j<list.size();j++)
-            {
-                if(FindSerialCommand==QString(list[j]))
-                {
-                    vFindCom = j;
-                }
-            }
-            if(vFindCom>=0)
-            {
-                for(int i = 0;!csvStream.atEnd();i++)
-                {
-                    QString fileLine = csvStream.readLine();
-                    if(i<SerialMutipSendNum)
-                    {
-
-                        list =  fileLine.split(",",
-                                              QString::KeepEmptyParts);
-                        LineEditData[i] = (list[vFindCom]).toLocal8Bit();
-                        vTxHexEnableCfg();
-                    }
-                    else
-                    {
-                        doWarning(
-                        QString::fromLocal8Bit("达到最多设定数量!（该多条发送最多仅支持添加%1条指令,多余指令未添加。）").arg(SerialMutipSendNum));
-                        break;
-                    }
-                }
-            }
-            else
-            {
-                doWarning(QString::fromLocal8Bit("请检查文件格式是否正确!"));
-            }
+           qint32                vFindCom = -1;
+           QList<QList<QString>> vlist;
+           CSVHelper  vCSVHelper_t(this);
+           vlist = vCSVHelper_t.ReadCSVtoData(str);
+           for(uint8_t i=0;i<vlist[0].size();i++)
+           {
+               if(FindSerialCommand==QString(vlist[0].at(i)))
+               {
+                   //记录特征名称值
+                   vFindCom = i;
+               }
+           }
+           if(vFindCom>=0)
+           {
+               for(int i = 1;i<vlist.size();i++)
+               {
+                   if(i-1<SerialMutipSendNum)
+                   {
+                       LineEditData[i-1] = vlist[i][vFindCom].toLocal8Bit();
+                       vTxHexEnableCfg();
+                   }
+                   else
+                   {
+                       doWarning(
+                       QString::fromLocal8Bit("达到最多设定数量!（该多条发送最多仅支持添加%1条指令,多余指令未添加。）").arg(SerialMutipSendNum));
+                       break;
+                   }
+               }
+           }
+           else
+           {
+               doWarning(QString::fromLocal8Bit("请检查文件格式是否正确!"));
+           }
         }
     }
 }
@@ -1638,6 +1759,652 @@ void MainWindow::vSerialStatusCheck(void)
     else
     {
         this->SerialClose();
+    }
+}
+bool MainWindow::eventFilter(QObject *object, QEvent *event)//步骤二
+{
+    if (object == this->vLinuxTextEdit && event->type() == QEvent::KeyPress)
+    {
+        QKeyEvent *e = static_cast <QKeyEvent *> (event);
+        if (e->key() == Qt::Key_Enter || e->key() == Qt::Key_Return)//步骤三
+        {
+            emit vWriteData(this->vLinuxTextEdit->toPlainText()
+                            .toLocal8Bit()+"\r\n");
+            this->vLinuxTextEdit->clear();
+            return true;
+        }
+    }
+    return QObject::eventFilter(object, event);
+}
+void MainWindow::vServerLinuxCfg(void)
+{
+//    scrollAreaWidgetLinux
+    /*多LineEdit配置*/
+    QVBoxLayout     * vQVBoxLayout =
+            new QVBoxLayout(ui->scrollAreaWidgetLinux);
+    QPushButton     * vpushButton,
+                    * vPathButton;
+    vQLineEditHex   * vlineEdit;
+    QCheckBox       * vcheckBox;
+    QTextEdit   * vNtextEdit;
+    QWidget     * vQWidget1     =
+            new QWidget(ui->scrollAreaWidgetLinux);
+    QHBoxLayout * vQHBoxLayout1 =
+            new QHBoxLayout(vQWidget1);
+    vQHBoxLayout1->setContentsMargins(0,0,0,0);
+    vNtextEdit    = new QTextEdit;
+    vpushButton   =
+            new QPushButton(vQWidget1);
+    vNtextEdit->setMinimumSize(0,48);
+    vNtextEdit->setMaximumSize(16777215,48);
+    vNtextEdit->setStyleSheet("background-color:#FFFFFF;"
+                              "color:#FF4500;");
+    vpushButton->setMinimumSize(48,48);
+    vpushButton->setMaximumSize(48,48);
+    vQHBoxLayout1->addWidget(vNtextEdit);
+    vQHBoxLayout1->addWidget(vpushButton);
+    vQWidget1->setLayout(vQHBoxLayout1);
+    vQVBoxLayout->addWidget(vQWidget1);
+    vNtextEdit->installEventFilter(this);
+    this->vLinuxTextEdit = vNtextEdit;
+    connect(this,&MainWindow::vWriteData,
+            &this->vSerialCtr.vSerial,
+            &vSerialPort::vWriteData,
+            Qt::QueuedConnection);
+    connect(vpushButton,&QPushButton::released,[=]()
+    {
+        emit vWriteData(vNtextEdit->toPlainText().toLocal8Bit()+"\r\n");
+    });
+    this->vLinuxTextEdit->setStyleSheet("background-color:#FFFFFF;"
+                                        "color:#FF4500;");
+
+    vLinuxData = new  QByteArray[SerialLinuxNum];
+    /*-------------------导入命令配置-------------------*/
+    for(qint16 i=0;i<SerialLinuxNum;i++)
+    {
+        QWidget   * vQWidget     =
+                new QWidget(ui->scrollAreaWidgetLinux);
+        QHBoxLayout * vQHBoxLayout =
+                new QHBoxLayout(vQWidget);
+        vQHBoxLayout->setContentsMargins(0,0,0,0);
+        vlineEdit   = new vQLineEditHex(vQWidget);
+        vpushButton = new QPushButton(QString::number(i+1,10),vQWidget);
+        vlineEdit->setMinimumSize(0,24);
+        vlineEdit->setMaximumSize(16777215,24);
+        vlineEdit->setStyleSheet("background-color:#FFFFFF;"
+                                 "color:#FF4500;");
+        //该地址是当前发送配置地址，可以更改
+        vpushButton->setMinimumSize(48,24);
+        vpushButton->setMaximumSize(48,24);
+        vQHBoxLayout->addWidget(vlineEdit);
+        vQHBoxLayout->addWidget(vpushButton);
+        vQWidget->setLayout(vQHBoxLayout);
+        vQVBoxLayout->addWidget(vQWidget);
+        connect(vpushButton,&QPushButton::released,[=]()
+        {
+            QByteArray str3;
+            vLinuxData[i].replace("\\t","\t")
+                         .replace("\\r","\r")
+                         .replace("\\n","\n").toHex();
+            emit vWriteData(vLinuxData[i]
+                            .replace("\\t","\t")
+                            .replace("\\r","\r")
+                            .replace("\\n","\n"));
+        });
+        connect(vlineEdit,&vQLineEditHex::textChanged,[=]()
+        {
+            vLinuxData[i]=vlineEdit->text().toLocal8Bit();
+        });
+        connect(this,&MainWindow::vLinuxShow,[=](){
+            vlineEdit->setText(vLinuxData[i]);
+        });
+
+    }
+}
+/*Tcp初始化*/
+void MainWindow::vTcpServerInit(void)
+{
+    connect(ui->vServerSave,&QPushButton::released,
+            this,&MainWindow::vSaveTcpRxText);
+    /*配置编码格式*/
+    ui->comboBoxServer6->addItem("NoCode",QSerialPort::Parity(SerialCodeNo));
+    ui->comboBoxServer6->addItem("UTF8",QSerialPort::Parity(SerialCodeUtf8));
+    ui->comboBoxServer6->addItem("UTF16",QSerialPort::Parity(SerialCodeUtf16));
+    ui->comboBoxServer6->addItem("GB18030",QSerialPort::Parity(SerialCodeGB18030));
+    ui->comboBoxServer6->addItem("ISO8859",QSerialPort::Parity(SerialCodeISO8859));
+    ui->comboBoxServer6->addItem("BIG5",QSerialPort::Parity(SerialCodeBig5));
+    ui->comboBoxServer6->addItem("Shift-JIS",QSerialPort::Parity(SerialShiftJIS));
+    /*编码格式*/
+    this->vServerTcp.vServerTcpCtr.vServerTcp.vTcpCodeMode =
+            vSerialCodeModeEnum(ui->comboBoxServer6->currentData().toInt());
+    connect(ui->comboBoxServer6,&QComboBox::currentTextChanged,[=](){
+        this->vServerTcp.vServerTcpCtr.vServerTcp.vTcpCodeMode =
+                vSerialCodeModeEnum(ui->comboBoxServer6->currentData().toInt());
+    });
+    /*配置地址*/
+    connect(&this->vServerTcp.vServerTcpCtr.vServerTcp,&vQTcpServer::vRxBuffChanged,
+            [=](QByteArray * arr){
+                if(arr!=nullptr)
+                {
+                    ui->plainTextTcpServer->SetShowBuffAddr(arr);
+                    ui->plainTextTcpServer->TimerStart();
+                }
+                else
+                {
+                    ui->plainTextTcpServer->TimerStop();
+                    ui->plainTextTcpServer->SetShowBuffAddr(nullptr);
+                    ui->plainTextTcpServer->clear();
+                }
+            });
+    ui->plainTextTcpServer->setHexEnableAddr(&this->vServerTcp.vServerTcpCtr.vServerTcp.vRxHexEnable);
+    ui->plainTextTcpServer->setTimerCfg(vTimerRxPlainServer);
+    ui->textEdit->setHexEnableAddr(&this->vServerTcp.vServerTcpCtr.vServerTcp.vTxHexEnable);
+    //发送hex模式切换
+    connect(this,
+            &MainWindow::txServerHexChanged,
+            ui->textEdit,
+            &vQTextEdit::hexEnableChanged);
+    /*hex格式是否使能*/
+    connect(this,
+            &MainWindow::vhexRxShowOne,
+            ui->plainTextTcpServer,
+            &vPlainTextEdit::hexEnableChanged);
+    /*hex格式是否使能*/
+    connect(ui->vSreverRxHex,&QCheckBox::released,[=]{
+        this->vServerTcp.vServerTcpCtr.vServerTcp.vRxHexEnable = ui->vSreverRxHex->isChecked();
+        emit vhexRxShowOne();
+    });
+    connect(ui->vTcpServerTxHex,&QCheckBox::released,[=]{
+        this->vServerTcp.vServerTcpCtr.vServerTcp.vTxHexEnable = ui->vTcpServerTxHex->isChecked();
+        emit txServerHexChanged();
+    });
+    //接收清除
+    connect(ui->vServerClear,&QPushButton::released,[=]()
+    {
+        if(ui->plainTextTcpServer->vShowBuff!=nullptr)
+        {
+            ui->plainTextTcpServer->clearBuff();
+            ui->plainTextTcpServer->TimerStart();
+        }
+    });
+    //绑定发送清除
+    connect(ui->vTcpServerTx2,&QPushButton::released,[=]()
+    {
+        switch(ui->tabWidgetTcp->currentIndex())
+        {
+            case 0:{
+                ui->textEdit->TextTxBuff.clear();
+                emit txServerHexChanged();
+            };break;
+            case 1:{
+                for(int i=0;i<TcpServerMutipSendNum;i++)
+                {
+                    vTcpLineEditData[i].clear();
+                }
+                emit txServerHexChanged();
+            };break;
+        }
+    });
+    //连接到端口更新连接端口
+    void (MainWindow::*vTcpListCfg1)()=&MainWindow::vTcpListCfg;
+    connect(&this->vServerTcp.vServerTcpCtr.vServerTcp,&vQTcpServer::vNewSocket,
+            this,vTcpListCfg1);
+    //端口改变
+    void (QComboBox::*vServer5Changed)(int)=&QComboBox::activated;
+    void (MainWindow::*vTcpListCfg2)(int)=&MainWindow::vTcpListCfg;
+    connect(ui->comboBoxServer5,vServer5Changed,
+            this,vTcpListCfg2);
+    //发送窗口
+    connect(ui->vTcpServerTx1,&QPushButton::released,
+            &this->vServerTcp.vServerTcpCtr,&vServerQObject::vTxTimeOut);
+    //打开TCP
+    connect(ui->vServerOpen,&QPushButton::released,[=]()
+    {
+        if(ui->vServerOpen->isChecked())
+        {
+            this->vServerTcp.vServerTcpCtr.vServerTcp.vSetPort(ui->comboBoxServer1->currentData().toInt());
+            if(this->vServerTcp.vServerTcpCtr.vServerTcp.vOpenServer())
+            {
+                ui->vServerOpen->setChecked(true);
+            }
+            else
+            {
+                ui->vServerOpen->setChecked(false);
+            }
+        }
+        else
+        {
+            this->vServerTcp.vServerTcpCtr.vServerTcp.vCloseServer();
+        }
+    });
+
+    /*端口显示窗口*/
+    ui->comboBoxServer1->addItem(QString::fromLocal8Bit("添加端口号"),0);
+    //端口改变
+    void (QComboBox::*vChanged)(int)=&QComboBox::activated;
+    connect(ui->comboBoxServer1,vChanged,
+            this,&MainWindow::vTcpServerChanged);
+
+    connect(ui->comboBoxServer5,vChanged,
+            [=](int index){
+                this->vServerTcp.vServerTcpCtr.vServerTcp.vConfigBuffAddr(index);
+            });
+    //加载多条显示框
+    vTxInfosInit(TcpServerMutipSendNum);
+
+    /*Tcp发送相关的定时器*/
+    this->vServerTcp.vServerTcpCtr.vTxTimerCntSet(ui->vTcpServerTimCnt->text().toInt());
+    connect(ui->vTcpServerTimCnt,&QSpinBox::textChanged,[=](){
+        this->vServerTcp.vServerTcpCtr.vTxTimerCntSet(ui->vTcpServerTimCnt->text().toInt());
+    });
+    //定时器控制
+    connect(ui->vTcpServerTimer,&QCheckBox::released,
+            this,&MainWindow::vTcpTimerCfg);
+    connect(ui->vTcpServerTxs,&QCheckBox::released,
+            this,&MainWindow::vTcpTxModeCfg);
+    ui->comboBoxTcpL->addItem("[ \\r\\n ]\t(CRLF)","\r\n");
+    ui->comboBoxTcpL->addItem("[ \\n ]\t(LF)","\n");
+    ui->comboBoxTcpL->addItem("[ } ]\t(JSON)","}");
+    this->vServerTcp.vServerTcpCtr.vServerTcp.vSetRxStampStr(ui->comboBoxTcpL->currentData().toString().toLocal8Bit());
+    connect(ui->comboBoxTcpL,&QComboBox::currentTextChanged,[=]()
+    {
+        this->vServerTcp.vServerTcpCtr.vServerTcp.vSetRxStampStr(ui->comboBoxTcpL->currentData().toString().toLocal8Bit());
+    });
+    /*配置接收时间戳处理*/
+    connect(ui->vSreverRxTim,&QCheckBox::released,[=](){
+        this->vServerTcp.vServerTcpCtr.vServerTcp.rxTimeStamp =ui->vSreverRxTim->isChecked();
+    });
+
+    //发送加入换行符
+    connect(ui->vTcpServeradd,&QCheckBox::released,[=]()
+    {
+        vTxTcpStampCfg();
+    });
+
+}
+void MainWindow::vSaveTcpRxText(void)
+{
+    QString dirpath =
+       QFileDialog::getSaveFileName(this, QStringLiteral("Save"),
+                                    qApp->applicationDirPath(),
+                                    QString(tr("File (*.txt)")),
+                                    Q_NULLPTR,
+                                    QFileDialog::ShowDirsOnly |
+                                    QFileDialog::DontResolveSymlinks);
+    if(dirpath!=NULL)
+    {
+        QFile file(dirpath);
+        //方式：Append为追加，WriteOnly，ReadOnly
+        if (!file.open(QIODevice::WriteOnly|QIODevice::Text))
+        {
+            QMessageBox::critical(NULL,
+                                  QString::fromLocal8Bit("提示"),
+                                  QString::fromLocal8Bit("无法创建文件"));
+            return ;
+        }
+        QTextStream out(&file);
+        out<<ui->plainTextTcpServer->toPlainText();
+    }
+}
+void MainWindow::vTcpTxModeCfg(void)
+{
+    if(ui->vTcpServerTxs->isChecked())
+    {
+        this->vServerTcp.vServerTcpCtr.vTcpTxCfg = vTcpMul;
+    }
+    else
+    {
+        this->vServerTcp.vServerTcpCtr.vTcpTxCfg = vTcpOrd;
+    }
+}
+void MainWindow::vTcpTimerCfg(void)
+{
+    if(ui->vTcpServerTimer->isChecked())
+    {
+        this->vServerTcp.vServerTcpCtr.vTxTimerStop();
+        this->vServerTcp.vServerTcpCtr.vTxTimerStart();
+    }
+    else
+    {
+        this->vServerTcp.vServerTcpCtr.vTxTimerStop();
+    }
+}
+void MainWindow::vTcpWrite(const QByteArray &str)
+{
+    this->vServerTcp.vServerTcpCtr.vServerTcp.vWriteStr(str);
+}
+void MainWindow::vTcpListCfg(int index)
+{
+    int checkIndex = index;
+    {
+        ui->comboBoxServer2->setText(this->vServerTcp.vServerTcpCtr.vServerTcp.vTcpList[checkIndex]->localAddress().toString());
+        ui->comboBoxServer3->setText(this->vServerTcp.vServerTcpCtr.vServerTcp.vTcpList[checkIndex]->peerAddress().toString());
+        ui->comboBoxServer4->setText(QString("%1").arg(this->vServerTcp.vServerTcpCtr.vServerTcp.vTcpList[checkIndex]->peerPort()));
+    }
+    this->vServerTcp.vServerTcpCtr.vServerTcp.vConfigBuffAddr(checkIndex);
+}
+void MainWindow::vTcpListCfg(void)
+{
+    if(this->vServerTcp.vServerTcpCtr.vServerTcp.vTcpCnt>0)
+    {
+        quint16 currentData    = 0;
+        int     checkIndex     = 0;
+        int     lastIndex      = 0;
+        bool    isConnectState = false;
+        QAbstractSocket::SocketState vSocketState;
+        //需要记录上次选中的端口,不随意自动切换
+        currentData = quint16(ui->comboBoxServer5->currentData().toUInt());
+        lastIndex   = ui->comboBoxServer5->currentIndex();
+        checkIndex  = this->vServerTcp.vServerTcpCtr.vServerTcp.vTcpCnt-1;
+        //清除后、重新加载
+        ui->comboBoxServer5->clear();
+        for(int i=0;i<this->vServerTcp.vServerTcpCtr.vServerTcp.vTcpCnt;i++)
+        {
+            vSocketState = this->vServerTcp.vServerTcpCtr.vServerTcp.vTcpList[i]->state();
+            if(vSocketState == QAbstractSocket::ConnectedState)
+            {
+                isConnectState = true;
+            }
+            else
+            {
+                isConnectState = false;
+            }
+            ui->comboBoxServer5->addItem(QString("%1[%2]")
+                .arg(this->vServerTcp.vServerTcpCtr.vServerTcp.vTcpListCom.at(i))
+                .arg(isConnectState),
+                quint16(this->vServerTcp.vServerTcpCtr.vServerTcp.vTcpListCom.at(i)));
+            if(lastIndex>=0)
+            {
+                //如果接口还可用
+                if(bool(this->vServerTcp.vServerTcpCtr.vServerTcp.vTcpList[lastIndex]->peerPort()))
+                {
+                    if(currentData == this->vServerTcp.vServerTcpCtr.vServerTcp.vTcpListCom.at(i))
+                    {
+                        checkIndex = i;//如果原来是拥有的，后续需要继续选定
+                    }
+                }
+            }
+        }
+        {
+            ui->comboBoxServer2->setText(this->vServerTcp.vServerTcpCtr.vServerTcp.vTcpList[checkIndex]->localAddress().toString());
+            ui->comboBoxServer3->setText(this->vServerTcp.vServerTcpCtr.vServerTcp.vTcpList[checkIndex]->peerAddress().toString());
+            ui->comboBoxServer4->setText(QString("%1").arg(this->vServerTcp.vServerTcpCtr.vServerTcp.vTcpList[checkIndex]->peerPort()));
+        }
+        ui->comboBoxServer5->setCurrentIndex(checkIndex);
+        this->vServerTcp.vServerTcpCtr.vServerTcp.vConfigBuffAddr(checkIndex);
+        ui->plainTextTcpServer->TimerStart();
+    }
+}
+void MainWindow::vImportTcpText(QString str)
+{
+    if(str!=NULL)
+    {
+        QFile vQfile(str);
+        //读取文件配置发送窗口
+        if (!vQfile.open(QIODevice::ReadOnly))
+        {
+            QMessageBox::critical(NULL,
+                                  QString::fromLocal8Bit("提示"),
+                                  QString::fromLocal8Bit("无法打开该文件"));
+            return ;
+        }
+        else
+        {
+           qint32                vFindCom = -1;
+           QList<QList<QString>> vlist;
+           CSVHelper  vCSVHelper_t(this);
+           vlist = vCSVHelper_t.ReadCSVtoData(str);
+           for(uint8_t i=0;i<vlist[0].size();i++)
+           {
+               if(FindTcpCommand==QString(vlist[0].at(i)))
+               {
+                   //记录特征名称值
+                   vFindCom = i;
+               }
+           }
+           if(vFindCom>=0)
+           {
+               for(int i = 1;i<vlist.size();i++)
+               {
+                   if(i-1<TcpServerMutipSendNum)
+                   {
+                       vTcpLineEditData[i-1] = vlist[i][vFindCom].toLocal8Bit();
+                       vTcpHexEnableCfg();
+                   }
+                   else
+                   {
+                       doWarning(
+                       QString::fromLocal8Bit("达到最多设定数量!（该多条发送最多仅支持添加%1条指令,多余指令未添加。）").arg(SerialMutipSendNum));
+                       break;
+                   }
+               }
+           }
+           else
+           {
+               doWarning(QString::fromLocal8Bit("请检查文件格式是否正确!"));
+           }
+        }
+
+    }
+}
+/*初始化多条窗口*/
+void MainWindow::vTxInfosInit(qint32 MultPleNum)
+{
+    /*多LineEdit配置*/
+    this->TcpMaxCnt = MultPleNum;
+    QVBoxLayout     * vQVBoxLayout =
+            new QVBoxLayout(ui->scrollAreaWidgetContents_5);
+    QPushButton     * vpushButton,
+                    * vPathButton;
+    vQLineEditHex   * vlineEdit;
+    QCheckBox       * vcheckBox;
+    QLineEdit       * vQlineEdit;
+    //分配依赖的地址
+    vTcpLineEditData = new QByteArray[this->TcpMaxCnt];
+    vTcpLineEditMap =  new QMap<qint32,bool*>;
+    //原始数据地址共享,该地址只能在此分配
+    this->vServerTcp.vServerTcpCtr.vAddrSet(
+                                  MultPleNum,
+                                  &vTcpLineEditData[0],
+                                  vTcpLineEditMap);
+    this->vServerTcp.vServerTcpCtr.vTxAddrSet(
+                    &ui->textEdit->TextTxBuff);
+    //添加一个自动导入命令的操作支持
+    /*-------------------导入命令配置-------------------*/
+    QWidget     * vQWidget1   =
+            new QWidget(ui->scrollAreaWidgetContents_5);
+    QHBoxLayout * vQHBoxLayout1 =
+            new QHBoxLayout(vQWidget1);
+    vQHBoxLayout1->setContentsMargins(0,0,0,0);
+    vPathButton   = new QPushButton(vQWidget1);
+    vQlineEdit    = new QLineEdit(vQWidget1);
+    vpushButton   =
+            new QPushButton(QString::fromLocal8Bit("导入"),vQWidget1);
+    vPathButton->setText("./");
+    vPathButton->setStyleSheet("color:#FFFFFF;font-weight: bold;");
+    vPathButton->setMinimumSize(24,24);
+    vPathButton->setMaximumSize(24,24);
+    vQlineEdit->setMinimumSize(0,24);
+    vQlineEdit->setMaximumSize(16777215,24);
+    vQlineEdit->setStyleSheet("background-color:#FFFFFF;"
+                              "color:#FF4500;");
+    vpushButton->setMinimumSize(48,24);
+    vpushButton->setMaximumSize(48,24);
+    vQHBoxLayout1->addWidget(vPathButton);
+    vQHBoxLayout1->addWidget(vQlineEdit);
+    vQHBoxLayout1->addWidget(vpushButton);
+    vQWidget1->setLayout(vQHBoxLayout1);
+    vQVBoxLayout->addWidget(vQWidget1);
+    connect(vPathButton,&QPushButton::released,[=]()
+    {
+        //获取文件名称，和路径
+        QString dirpath =
+                QFileDialog::getOpenFileName(this,
+                                             QStringLiteral("获取文件配置路径"),
+                                             qApp->applicationDirPath(), QString(tr("File (*.csv)")));
+        if(dirpath!=NULL)
+        {
+            vQlineEdit->setText(dirpath);
+        }
+    });
+    connect(vpushButton,&QPushButton::released,[=]()
+    {
+        vImportTcpText(vQlineEdit->text());
+    });
+    /*-------------------导入命令配置-------------------*/
+    for(qint16 i=0;i<this->TcpMaxCnt;i++)
+    {
+        QWidget     * vQWidget     =
+                new QWidget(ui->scrollAreaWidgetContents_5);
+        QHBoxLayout * vQHBoxLayout =
+                new QHBoxLayout(vQWidget);
+        vQHBoxLayout->setContentsMargins(0,0,0,0);
+        vcheckBox   = new QCheckBox(vQWidget);
+        vlineEdit   = new vQLineEditHex(vQWidget);
+        vpushButton = new QPushButton(QString::number(i+1,10),vQWidget);
+
+        vcheckBox->setMinimumSize(24,24);
+        vcheckBox->setMaximumSize(24,24);
+        vlineEdit->setMinimumSize(0,24);
+        vlineEdit->setMaximumSize(16777215,24);
+        vlineEdit->setStyleSheet("background-color:#FFFFFF;"
+                                 "color:#FF4500;");
+        //设置窗口ID
+        vlineEdit->QLineId = i+1;
+        //初始化是否被选中
+        vlineEdit->isTxEnable =
+                vcheckBox->isChecked();
+        //分配地址
+        vlineEdit->setTextTxBuffAddr(&vTcpLineEditData[i]);
+        //该地址是当前发送配置地址，可以更改
+        vpushButton->setMinimumSize(48,24);
+        vpushButton->setMaximumSize(48,24);
+        vQHBoxLayout->addWidget(vcheckBox);
+        vQHBoxLayout->addWidget(vlineEdit);
+        vQHBoxLayout->addWidget(vpushButton);
+        vQWidget->setLayout(vQHBoxLayout);
+        vQVBoxLayout->addWidget(vQWidget);
+        //hex格式共享，所有控件建议只读
+        vlineEdit->setHexEnableAddr(&this->vServerTcp.vServerTcpCtr.vServerTcp.vTxHexEnable);
+        /*发送端hex配置,本地如果hex格式标志改变，使用信号与槽更新每个控件的显示*/
+        connect(this,
+                &MainWindow::txServerHexChanged,
+                vlineEdit,
+                &vQLineEditHex::hexEnableChanged);
+
+        //绑定信号与槽，更新是否使能发送
+        connect(vcheckBox,&QCheckBox::released,[=]()
+        {
+            vlineEdit->isTxEnable = vcheckBox->isChecked();
+        });
+        //由于多条发送，此处需要传递需要发送的数据的ID
+        connect(vpushButton,&QPushButton::released,[=]()
+        {
+            emit lineEditTxOne(vlineEdit->QLineId-1);
+        });
+        //map查表
+        vTcpLineEditMap->insert(i+1,&vlineEdit->isTxEnable);
+        connect(this,&MainWindow::vMapTcpUpdata,[=]()
+        {
+            if(vTcpLineEditData[i].size()>0)
+            {
+                vcheckBox->setChecked(*vTcpLineEditMap->find(i+1).value());
+            }
+            else
+            {
+                *vTcpLineEditMap->find(i+1).value() = false;
+            }
+        });
+    }
+    ui->scrollAreaWidgetContents_5->setLayout(vQVBoxLayout);
+    //触发LineEdit发送
+    connect(this,&MainWindow::lineEditTxOne,
+            &this->vServerTcp.vServerTcpCtr,
+            &vServerQObject::vLineEditTxOne,
+            Qt::QueuedConnection);
+}
+//刷新TxHexEnable
+void MainWindow::vTcpHexEnableCfg(void)
+{
+    if(ui->vTcpServerTxHex->isChecked())
+    {
+        this->vServerTcp.vServerTcpCtr.vServerTcp.vTxHexEnable = true;
+    }
+    else
+    {
+        this->vServerTcp.vServerTcpCtr.vServerTcp.vTxHexEnable = false;
+    }
+    emit txServerHexChanged();
+}
+//发送换行符控制
+void MainWindow::vTxTcpStampCfg(void)
+{
+    if(ui->vTcpServeradd->isChecked())
+    {
+        this->vServerTcp.vServerTcpCtr.LineFeed=QByteArray("\n");
+    }
+    else
+    {
+        this->vServerTcp.vServerTcpCtr.LineFeed=QByteArray("");
+    }
+}
+//重新加载部分参数
+void MainWindow::vTcpCfgUpdata(void)
+{
+    //设置编码格式
+    this->vServerTcp.vServerTcpCtr.vServerTcp.vTcpCodeMode =
+            vSerialCodeModeEnum(ui->comboBoxServer6->currentData().toInt());
+    //接收换行方式
+    this->vServerTcp.vServerTcpCtr.vServerTcp.vSetRxStampStr(ui->comboBoxTcpL->currentData().toString().toLocal8Bit());
+    //接收HEX格式使能
+    this->vServerTcp.vServerTcpCtr.vServerTcp.vRxHexEnable = ui->vSreverRxHex->isChecked();
+    //接收换行使能
+    this->vServerTcp.vServerTcpCtr.vServerTcp.rxTimeStamp =ui->vSreverRxTim->isChecked();
+    //发送模式设置
+    vTcpTxModeCfg();
+    //发送HEX格式使能
+    vTcpHexEnableCfg();
+    //发送定时器
+    this->vServerTcp.vServerTcpCtr.vTxTimerCntSet(ui->vTcpServerTimCnt->text().toInt());
+    emit vMapTcpUpdata();
+    vTxTcpStampCfg();
+}
+void MainWindow::vTcpServerChanged(qint16 index_t)
+{
+    if(ui->comboBoxServer1->currentText()==QString::fromLocal8Bit("添加端口号"))
+    {
+        bool ok,nohave;
+        int i;
+        QString str;
+        ok = false;
+        nohave = false;
+        str =
+        QInputDialog::getText(this,QString::fromLocal8Bit("添加端口号"),
+                      QString::fromLocal8Bit("新的端口名称"),
+                      QLineEdit::Normal,"0",
+                      &ok,Qt::WindowCloseButtonHint);
+        for(i=0;i<ui->comboBoxServer1->count();i++)
+        {
+            if(ok)
+            {
+                if(ui->comboBoxServer1->itemText(i)==str)//如果已经有了
+                {
+                    nohave = false;
+                    break;
+                }
+            }
+        }
+        if(i>=ui->comboBoxServer1->count()){nohave = true;}
+        if(nohave&ok)
+        {
+            ui->comboBoxServer1->setItemText(ui->comboBoxServer1->count()-1,str);
+            ui->comboBoxServer1->setItemData(ui->comboBoxServer1->count()-1,str.toInt());
+            ui->comboBoxServer1->addItem(QString::fromLocal8Bit("添加端口号"),0);
+        }
+        else if(!nohave)
+        {
+            doWarning(QString::fromLocal8Bit("已添加该端口号"));
+        }
     }
 }
 /*---------------------------提示窗口-------------------------------*/
@@ -1663,3 +2430,5 @@ void MainWindow::doAbout(void)
                             QString::fromLocal8Bit("作者：SEASKY-刘威\n"
                                                    "参考：\n"));
 }
+
+

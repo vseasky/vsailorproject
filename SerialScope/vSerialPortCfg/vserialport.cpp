@@ -1,5 +1,4 @@
 ﻿#include "vserialport.h"
-
 /*
  *
  *

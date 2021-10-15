@@ -60,11 +60,11 @@ public:
     explicit vSerialPort(QObject *parent = nullptr);
     ~vSerialPort(void);
     /*以下信息将提供给很多接口使用，地址初始化时提供，外部无需再次赋值*/
-    QSerialPort          * qSerial;                //提供串口操作
+    QSerialPort          * qSerial = nullptr;                //提供串口操作
     vSerialComInfoStruct * vSerialComInfo=nullptr; //串口设备扫描列表
-    vSerialConfigStruct  * vSerialConfig;          //要使用的串口信息
-    vSerialDataStruct    * vSerialData;            //简单处理后的数据
-    vSerialCodeModeEnum  * vCodeConver;            //编码格式信息
+    vSerialConfigStruct  * vSerialConfig = nullptr;          //要使用的串口信息
+    vSerialDataStruct    * vSerialData = nullptr;            //简单处理后的数据
+    vSerialCodeModeEnum  * vCodeConver = nullptr;            //编码格式信息
     qint32                 vSerialPortCnt;         //识别到的串口设备数量
 public slots:
     void vSerialOpen(bool & isOpen);

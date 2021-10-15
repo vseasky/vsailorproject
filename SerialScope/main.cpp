@@ -1,12 +1,12 @@
 ﻿#include "mainwindow.h"
 #include <QApplication>
-const QString SerialScopeVersion = "Sailor Project V0.0.1";
+const QString SerialScopeVersion = "Sailor Project V0.0.3";
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
     MainWindow w;
-    // QFile file(":/qss/vQss/vQss.css");
-    QFile file(":/qss/vQss/vQss_black.css"); // 黑色主题
+  QFile file(":/qss/vQss/vQss.css");
+//    QFile file(":/qss/vQss/vQss_black.css");
     if (file.open(QFile::ReadOnly))
     {
         QTextStream filetext(&file);

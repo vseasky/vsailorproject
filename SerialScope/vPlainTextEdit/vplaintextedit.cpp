@@ -2,7 +2,7 @@
 #include <QDebug>
 //自定义的可以刷新大量数据的QPlainTextEdit显示窗口，定时器开启自动刷新
 static int32_t MAXRANGESIZE = 8192;
-vPlainTextEdit::vPlainTextEdit(QWidget *parent) : QPlainTextEdit(parent)
+vPlainTextEdit::vPlainTextEdit(QWidget *parent) : QTextEdit(parent)
 {
     this->TimerCfg = 100;//默认100，后续外层通过setTimerCfg设定时间，需要重启
     this->TimerCtr.setTimerType(Qt::PreciseTimer);
@@ -12,7 +12,21 @@ vPlainTextEdit::vPlainTextEdit(QWidget *parent) : QPlainTextEdit(parent)
     connect(this->verticalScrollBar(),&QAbstractSlider::actionTriggered,
             this,&vPlainTextEdit::autoScroll);
     this->setReadOnly(true);
-//    this->TimerStart();
+    this->setAcceptRichText(true);
+    this->clear();
+
+    const int tabStop = 4;  // 4 characters
+
+    QFontMetrics metrics(this->font());
+    this->setTabStopWidth(tabStop * metrics.width(' '));
+    //默认颜色
+//    this->setStyleSheet("color:#0000DF");
+//  this->TimerStart();
+}
+vPlainTextEdit::~vPlainTextEdit(void)
+{
+    this->TimerStop();
+    this->vShowBuff  = nullptr;
 }
 void vPlainTextEdit::setHexEnableAddr(bool * addr)
 {
@@ -59,7 +73,29 @@ void vPlainTextEdit::vTimerOut(void)
         if((this->showPosMax-this->showPosMin)>MAXRANGESIZE)
         {
             //不能够在容量之内显示
-            this->showPosMin = this->showPosMax-MAXRANGESIZE;
+            qint32 indexOf1 =
+                    this->vShowBuff->indexOf("<br/>",this->showPosMax-MAXRANGESIZE);
+            qint32 indexOf2 =
+                    this->vShowBuff->indexOf("\n",this->showPosMax-MAXRANGESIZE);
+            if(indexOf1>=0)
+            {
+                index_of_line = indexOf1;
+            }
+            else if(indexOf2>=0)
+            {
+                index_of_line = indexOf2;
+            }else
+            {
+                index_of_line = -1;
+            }
+            if(index_of_line>=0)
+            {
+                this->showPosMin = index_of_line;
+            }
+            else
+            {
+                this->showPosMin = this->showPosMax-MAXRANGESIZE;
+            }
         }
         this->vUpdataShow();//更新显示
         this->moveCursor(QTextCursor::End);
@@ -81,7 +117,29 @@ void vPlainTextEdit::autoScroll(int action)
        {
            if(this->showPosMax-this->showPosMin<this->showPosMax/2)
            {
-                this->showPosMin = this->showPosMin*0.5;
+               qint32 indexOf1 =
+                       this->vShowBuff->indexOf("<br/>",this->showPosMin*0.5);
+               qint32 indexOf2 =
+                       this->vShowBuff->indexOf("\n",this->showPosMin*0.5);
+               if(indexOf1>=0)
+               {
+                   index_of_line = indexOf1;
+               }
+               else if(indexOf2>=0)
+               {
+                   index_of_line = indexOf2;
+               }else
+               {
+                   index_of_line = -1;
+               }
+               if(index_of_line>=0)
+               {
+                   this->showPosMin = index_of_line;
+               }
+               else
+               {
+                   this->showPosMin = this->showPosMin*0.5;
+               }
            }
            else
            {
@@ -110,11 +168,15 @@ void vPlainTextEdit::vUpdataShow(void)
     {
         if(!(*this->hexEnable))
         {
-            this->setPlainText(this->vShowBuff->mid(this->showPosMin,this->showPosMax));
+            this->setPlainText(this->vShowBuff->mid(this->showPosMin,
+                                                    this->showPosMax));
         }
         else
         {
-            this->setPlainText(this->vShowBuff->mid(this->showPosMin,this->showPosMax).toHex(' ').toUpper());
+            this->setPlainText(this->vShowBuff->mid(this->showPosMin,
+                                                    this->showPosMax)
+                                                    .toHex(' ')
+                                                    .toUpper());
         }
     }
 }
@@ -133,17 +195,21 @@ void vPlainTextEdit::hexEnableChanged(void)
 {
     //非文本输入切换操作
     if(this->hexEnable==nullptr)return;
+    if(this->vShowBuff==nullptr)return;
     if(this->showPosMin<=this->showPosMax)
     {
         this->showPosMin = 0;
         this->showPosMax = 0;
         if(!(*this->hexEnable))
         {
-            this->setPlainText(this->vShowBuff->mid(this->showPosMin,this->showPosMax));
+            this->setPlainText(this->vShowBuff->mid(this->showPosMin,
+                                                    this->showPosMax));
         }
         else
         {
-            this->setPlainText(this->vShowBuff->mid(this->showPosMin,this->showPosMax).toHex(' ').toUpper());
+            this->setPlainText(this->vShowBuff->mid(this->showPosMin,
+                                                    this->showPosMax)
+                                                    .toHex(' ').toUpper());
         }
         TimerStart();
     }

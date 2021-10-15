@@ -7,7 +7,7 @@ MainWindow
 {
     background-color:#1296db/*#FFFFFF*//*#00BFFF*/;
     border:1px solid #CCCCCC;
-    font-weight: bold;
+    font-weight: normal;
 }
 QMenuBar::item{
     color:black;
@@ -72,7 +72,7 @@ QTabBar::tab:bottom:selected,QTabBar::tab:bottom:hover{
 }
 
 QTabBar::tab:left:selected,QTabBar::tab:left:hover{
-border-width:0px 2px 0px 0px;
+    border-width:0px 2px 0px 0px;
 }
 
 QTabBar::tab:first:top:selected,QTabBar::tab:first:top:hover,QTabBar::tab:first:bottom:selected,QTabBar::tab:first:bottom:hover{
@@ -126,17 +126,23 @@ QComboBox::drop-down{
 .QGroupBox{
     background-color:#FFFFFF;
 }
+.vPlainTextEdit
+{
+    color:#0000CD ;
+    background-color:#F0F8FF;
+    font-weight: normal;
+}
 QPlainTextEdit
 {
-    color:/*#FF0033*//*#009933*/#33CC99/*#33CC33*/ /*#FFCC33*/;
-    background-color:#FFFFFF;
-    font-weight: bold;
+    color:#0000CD  /*#FF0033*//*#009933*//*#33CC99*//*#33CC33*/ /*#FFCC33*/;
+    background-color:#F0F8FF;
+    font-weight: normal;
 }
 QTextEdit
 {
-    color:#0099FF;
-    background-color:#FFFFFF;
-    font-weight: bold;
+    color:#FF4500;
+    background-color:#F0F8FF;
+    font-weight: normal;
 }
 
 

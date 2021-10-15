@@ -37,7 +37,7 @@ public:
     QVector<double> qv_x, qv_y;
     PlotShortcut    myPlotShortcut;
     vTracer        *mxTracer = nullptr; //坐标跟随鼠标.使用时创建
-    QString        *vName;
+    QString        *vName = nullptr;
     bool xAxisAuto = true;
     bool showEnable=true;
     uint8_t keyStatus;

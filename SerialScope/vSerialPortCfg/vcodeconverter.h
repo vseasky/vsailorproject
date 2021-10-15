@@ -10,7 +10,7 @@
 typedef enum
 {
     SerialCodeNo = 0,
-    SerialCodeUtf8, //Utf8编码格式
+    SerialCodeUtf8,     //Utf8编码格式
     SerialCodeUtf16,    //Utf16编码格式
     SerialCodeGB18030,  //GBK编码格式、兼容GBK18030
     SerialCodeISO8859,  //IOS8859-1

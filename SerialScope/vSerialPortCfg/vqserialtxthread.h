@@ -21,7 +21,7 @@ public:
     explicit vQObjectTx(QObject *parent = nullptr);
     ~vQObjectTx(void);
     /*------------串口基础类，必须初始化------------*/
-    vSerialPort   *vSerial;
+    vSerialPort   *vSerial = nullptr;
     void vSerialAddrSet(vSerialPort   *vSerial_t)
     {
         vSerial = vSerial_t;
@@ -45,15 +45,15 @@ public:
     void vTimerStop(void);
 
     /*发送时分配到的地址*/
-    QByteArray * textEditTx;//单条数据发送，外部设定
-    QByteArray * lineEditTx;//多条发送 ，内部更新
-    QByteArray * SeaskyTx;  //按协议发送
+    QByteArray * textEditTx = nullptr;//单条数据发送，外部设定
+    QByteArray * lineEditTx = nullptr;//多条发送 ，内部更新
+    QByteArray * SeaskyTx   = nullptr;//按协议发送
     QByteArray   LineFeed;  //换行符
 
     /*多条发送存储地址*/
-    QByteArray         * LineEditData;
-    QMap<qint32,bool*> * LineEditMap;
-    qint32             * MultPleMaxCnt;
+    QByteArray         * LineEditData  = nullptr;
+    QMap<qint32,bool*> * LineEditMap   = nullptr;
+    qint32             * MultPleMaxCnt = nullptr;
 
     qint32               timerCnt=0;
     void vTxAddrSet(QByteArray * dataAddr);

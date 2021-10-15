@@ -31,7 +31,7 @@ vQWebEngineView::vQWebEngineView(QWidget *parent) : QWidget(parent)
     QWidget  * vQWidget2 = new QWidget(this);
     view = new QWebEngineView(vQWidget2);
     vQWidget2->setAutoFillBackground(true);
-    //view->page()->settings()->setAttribute(QWebEngineSettings::ShowScrollBars,false);
+//    view->page()->settings()->setAttribute(QWebEngineSettings::ShowScrollBars,false);
     view->load(QUrl("https://seasky-master.github.io/html/"));
     view->showMaximized();
     vQVBoxLayout->addWidget(vQWidget);
@@ -63,7 +63,7 @@ vQWebEngineView::vQWebEngineView(QWidget *parent) : QWidget(parent)
         }
         else
         {
-            view->load(QUrl("https://seasky-master.github.io/html/"));
+//            view->load(QUrl("https://seasky-master.github.io/html/"));
             //此处可以加载本地说明文档
         }
     });
