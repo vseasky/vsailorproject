@@ -2,7 +2,7 @@
 
 # 软件说明文档
 
-[软件说明](https://seasky-master.github.io/html/seasky_works/SailorProject/SailorProject.html)
+[Sailor Project 软件说明 ](https://seasky-master.github.io/html/seasky_works/SailorProject/SailorProject.html)
 
 # SerialScope Plus
 - 程序打包命令 `windeployqt`
