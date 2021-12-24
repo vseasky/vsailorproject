@@ -1,5 +1,8 @@
 ﻿## 使用 `GPL` 开源协议,严禁用于商业用途
 
+# 软件说明文档
+
+[软件说明](https://seasky-master.github.io/html/seasky_works/SailorProject/SailorProject.html)
 
 # SerialScope Plus
 - 程序打包命令 `windeployqt`
