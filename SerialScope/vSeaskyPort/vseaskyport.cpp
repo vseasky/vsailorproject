@@ -6,6 +6,9 @@ const qint32 rxunitwidth = 64;
 const qint32 txnamewidth = 64;
 const qint32 txunitwidth = 64;
 const qint32 floatnum    = 6;  //小数点位数
+
+
+
 vSeaskyPort::vSeaskyPort(QWidget *parent) : QObject(parent)
 {
     vQTimerTxStop();
@@ -224,64 +227,43 @@ void vSeaskyPort::vSeaskyRxIRQ(void)
         }
         //数据帧协议解析，以及判断，需要先具备10个字符，即包含完整的帧头，帧尾数据
         if((vRxBuff.at(0)==char(0XA5))
-             &&(vRxBuff.length()>=10))
+             &&(vRxBuff.length()>=12))
         {
-            vHeadCheck();
-            //协议处理，如果现有数据大于数据帧长度
-            if(thisLength<=vRxBuff.length())//如果现在达到了读取数据量
-            {
-                if( this->vProtocol.get_protocol_info(
-                    this->vProtocol.rx_info.utf8_data,
-                    &rx_pos,
-                    &this->vProtocol.rx_info.flags_register,
-                    this->vProtocol.rx_info.data))
+                //协议处理，如果现有数据大于数据帧长度
+                memcpy(&this->vProtocol.pRxProtocol->message_st.pData[0],&((uint8_t*)(vRxBuff.data()))[0],vRxBuff.length());
+                if(parse_protocol(this->vProtocol.pRxProtocol,vRxBuff.length())==PROTOCOL_RESULT_OK)
                 {
-                    //删除已使用
-                    vRxBuff.remove(0,thisLength);
+                    for(uint8_t k = 0;k<this->vProtocol.pRxProtocol->frame_st.frame_user.cmd_data.data_len;k++)
+                    {
+                        qDebug()<<"pData:"<<this->vProtocol.pRxProtocol->message_st.pData[k];
+                    }
                     //获取接收数据的时间戳
                     QString timeString;
                     timeString = QDateTime::currentDateTime().toString("[yyyy-MM-dd hh:mm:ss.zzz]\n");
-                    /*获取CMDID*/
-                    this->vProtocol.rx_info.cmd_id =
-                    this->vProtocol.rx_pro.cmd_id;
-                    /*获取数据长度*/
-                    this->vProtocol.rx_info.float_len =
-                    (this->vProtocol.rx_pro.header.data_length-2)/4;
-                    /*获取字符长度*/
-                    this->vProtocol.rx_info.utf8_data_len =
-                    this->vProtocol.rx_date_length;
                     /*加入显示*/
                     vUpdateShowBuff(timeString);
+                    qDebug()<<this->vProtocol.pRxProtocol->frame_st.frame_user.equipment_type;
+                    qDebug()<<this->vProtocol.pRxProtocol->frame_st.frame_user.equipment_id;
+                    qDebug()<<this->vProtocol.pRxProtocol->frame_st.frame_user.data_id;
                     /*加入示波器*/
                     this->vRxdata.clear();
-                    for(qint8 i=0;i<this->vProtocol.rx_info.float_len;i++)
+                    for(qint8 i=0;i<this->vProtocol.pRxProtocol->frame_st.frame_user.cmd_data.data_len;i++)
                     {
-                       this->vRxdata.append(this->vProtocol.rx_info.data[i]);
+                        qDebug()<<((float*)this->vProtocol.pRxProtocol->frame_st.frame_user.cmd_data.pData)[i];
+                        this->vRxdata.append(((float*)this->vProtocol.pRxProtocol->frame_st.frame_user.cmd_data.pData)[i]);
                     }
                     ShowQVariant.setValue(this->vRxdata);
                     emit RxScope(ShowQVariant);
-                    //待接收长度清零
-                    thisLength = 0;
-                    //如果有数据未处理
-                    if(vRxBuff.length()>=10)
-                    {
-                        vSeaskyRxIRQ(vRxBuff);
-                    }
-                }
-                else
-                {
-                    //解析失败判断
-                    thisLength = 0;
                     //删除已使用
-                    vRxBuff.remove(0,thisLength);
+                    vRxBuff.remove(0,this->vProtocol.pRxProtocol->message_st.data_len);
+                    //待接收长度清零
+                    this->vProtocol.pRxProtocol->message_st.data_len = 0;
                     //如果有数据未处理
-                    if(!vRxBuff.isEmpty())
+                    if(vRxBuff.length()>=12)
                     {
-                        //直接当新数据处理
                         vSeaskyRxIRQ(vRxBuff);
                     }
                 }
-            }
             return;
         }
     }
@@ -300,97 +282,36 @@ void vSeaskyPort::vSeaskyRxIRQ(const QByteArray &str)
     }
     //数据帧协议解析，以及判断，需要先具备10个字符，即包含完整的帧头，帧尾数据
     if((vRxBuff.at(0)==char(0XA5))
-         &&(vRxBuff.length()>=10))
+         &&(vRxBuff.length()>=12))
     {
-        vHeadCheck();
         //协议处理，如果现有数据大于数据帧长度
-        if(thisLength<=vRxBuff.length())//如果现在达到了读取数据量
+        memcpy(&this->vProtocol.pRxProtocol->message_st.pData[0],&((uint8_t*)(vRxBuff.data()))[0],vRxBuff.length());
+        if(parse_protocol(this->vProtocol.pRxProtocol,vRxBuff.length())==PROTOCOL_RESULT_OK)
         {
-            if(this->vProtocol.get_protocol_info(
-               this->vProtocol.rx_info.utf8_data,
-               &rx_pos,
-               &this->vProtocol.rx_info.flags_register,
-               this->vProtocol.rx_info.data))
-            {
-                //删除已使用
-                vRxBuff.remove(0,thisLength);
                 //获取接收数据的时间戳
                 QString timeString;
                 timeString = QDateTime::currentDateTime().toString("[yyyy-MM-dd hh:mm:ss.zzz]\n");
                 /*获取CMDID*/
-                this->vProtocol.rx_info.cmd_id =
-                this->vProtocol.rx_pro.cmd_id;
-                /*获取数据长度*/
-                this->vProtocol.rx_info.float_len =
-                (this->vProtocol.rx_pro.header.data_length-2)/4;
-                /*获取字符长度*/
-                this->vProtocol.rx_info.utf8_data_len =
-                this->vProtocol.rx_date_length;
                 /*加入显示*/
                 vUpdateShowBuff(timeString);
                 /*加入示波器*/
                 this->vRxdata.clear();
-                for(qint8 i=0;i<this->vProtocol.rx_info.float_len;i++)
+                for(qint8 i=0;i<this->vProtocol.pRxProtocol->frame_st.frame_user.cmd_data.data_len;i++)
                 {
-                   this->vRxdata.append(this->vProtocol.rx_info.data[i]);
+                    qDebug()<<((float*)this->vProtocol.pRxProtocol->frame_st.frame_user.cmd_data.pData)[i];
+                   this->vRxdata.append(((float*)this->vProtocol.pRxProtocol->frame_st.frame_user.cmd_data.pData)[i]);
                 }
-                ShowQVariant.setValue(this->vRxdata);
-                //待接收长度清零
-                thisLength = 0;
-                //如果有数据未处理
-                if(vRxBuff.length()>=10)
-                {
-                    vSeaskyRxIRQ(vRxBuff);
-                }
-            }
-            else
-            {
-                //解析失败判断
-                thisLength = 0;
                 //删除已使用
-                vRxBuff.remove(0,thisLength);
+                vRxBuff.remove(0,this->vProtocol.pRxProtocol->message_st.data_len);
+                //待接收长度清零
+                this->vProtocol.pRxProtocol->message_st.data_len = 0;
                 //如果有数据未处理
-                if(!vRxBuff.isEmpty())
+                if(vRxBuff.length()>=12)
                 {
-                    //直接当新数据处理
                     vSeaskyRxIRQ(vRxBuff);
                 }
             }
-        }
         return;
-    }
-}
-void vSeaskyPort::vHeadCheck(void)
-{
-    /************此部分用于将数据连接起来************/
-    this->vProtocol.rx_info.utf8_data
-           = (uint8_t*)(vRxBuff.data());
-    //判断帧头是否正确，并计算出数据总长度
-    rx_pos = 0;
-    //如果未获取过数据长度
-    if(thisLength==0)
-    {
-        //解析帧头协议获取数据长度
-        if(this->vProtocol.get_protocol_len(
-               this->vProtocol.rx_info.utf8_data,
-               &rx_pos,
-               &thisLength))
-        {
-            //如果超出本软件支持的容量,认为接收错误
-            if(thisLength>=this->vRxNumUTF8)
-            {
-                thisLength = 0;
-                vRxBuff.clear();
-            }
-            return;
-        }
-        else
-        {
-            //帧头校验解析失败
-            thisLength = 0;
-            vRxBuff.clear();
-            return;
-        }
     }
 }
 void vSeaskyPort::setPlainEdit(vPlainTextEdit * edit)
@@ -404,16 +325,16 @@ void vSeaskyPort::setPlainEdit(vPlainTextEdit * edit)
 void vSeaskyPort::vUpdateShowBuff(const QString &currentTimer)
 {
     this->vRxShow.append(currentTimer);
-    for(qint16 i=0;i<this->vProtocol.rx_info.float_len;i++)
+    for(qint16 i=0;i<this->vProtocol.pRxProtocol->frame_st.frame_user.cmd_data.data_len;i++)
     {
           this->vRxShow.append(QString("\t%1\t:%2\t%3\n") .
                                arg(this->vRxSeasky.vName[i]).
                                arg(this->vRxSeasky.vQString[i],12).
                                arg(this->vRxSeasky.vUnit[i]));
     }
-    this->vRxSeasky.vCmdId = this->vProtocol.rx_info.cmd_id;
-    this->vRxSeasky.vReg = this->vProtocol.rx_info.flags_register;
-    this->vRxSeasky.vDataLen = this->vProtocol.rx_info.float_len;
+    this->vRxSeasky.vCmdId      = this->vProtocol.pRxProtocol->frame_st.frame_user.equipment_id;
+    this->vRxSeasky.vReg        = this->vProtocol.pRxProtocol->frame_st.frame_user.data_id;
+    this->vRxSeasky.vDataLen    = this->vProtocol.pRxProtocol->frame_st.frame_user.cmd_data.data_len;
     emit showRxHead();
     emit textChanged();
 }
@@ -437,21 +358,16 @@ void vSeaskyPort::vSeaskyTxSlot(void)
     {
         return;//超出长度，错误
     }
-    if(this->vProtocol.tx_info.data!=nullptr)
+    if(this->vProtocol.pTxProtocol->message_st.pData!=nullptr)
     {
-        this->vProtocol.tx_info.cmd_id = this->vTxSeasky.vCmdId;
-        this->vProtocol.tx_info.flags_register = this->vTxSeasky.vReg;
-        this->vProtocol.tx_info.float_len =
-                    this->vTxSeasky.vDataLen;
-        this->vProtocol.get_protocol_send_data(
-                    this->vProtocol.tx_info.cmd_id,
-                    this->vProtocol.tx_info.flags_register,
-                    this->vProtocol.tx_info.data,
-                    this->vProtocol.tx_info.float_len,
-                    this->vProtocol.tx_info.utf8_data,
-                    &this->vProtocol.tx_info.utf8_data_len);
-        vSeaskyTxBuff=QByteArray(reinterpret_cast<const char*>(this->vProtocol.tx_info.utf8_data),
-                    this->vProtocol.tx_info.utf8_data_len);
+        //vSeaskyPortV2
+        this->vProtocol.pTxProtocol->frame_st.frame_user.equipment_type = 0x01;
+        this->vProtocol.pTxProtocol->frame_st.frame_user.equipment_id = this->vTxSeasky.vCmdId;
+        this->vProtocol.pTxProtocol->frame_st.frame_user.data_id = this->vTxSeasky.vReg;
+        this->vProtocol.pTxProtocol->frame_st.frame_user.cmd_data.data_len = this->vTxSeasky.vDataLen;
+        make_protocol(this->vProtocol.pTxProtocol);
+        vSeaskyTxBuff=QByteArray(reinterpret_cast<const char*>(this->vProtocol.pTxProtocol->message_st.pData),
+                    this->vProtocol.pTxProtocol->message_st.data_len);
         emit vSerialTx(vSeaskyTxBuff);
     }
 }

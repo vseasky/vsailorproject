@@ -7,7 +7,7 @@
 #include <QLineEdit>
 #include <QThread>
 #include <QTimer>
-#include <vSeaskyPort/Protocol/bsp_protocol.h>
+#include <vSeaskyPort/Protocol/bsp_protocol_class.h>
 #include <vPlainTextEdit/vplaintextedit.h>
 #include <QSerialPort>
 #include <vserialport.h>
@@ -52,12 +52,11 @@ public:
     QByteArray  vRxShow;
     QByteArray  vRxBuff;//数据处理缓冲，中间量
     QByteArray  vSeaskyTxBuff;
-    SerialProtocol vProtocol;
+    ComCanClass vProtocol;
 
     bool      vQTimerEnable;
     QTimer    vQTimer;
     qint32    timerCntSet=100;
-    uint16_t rx_pos=0,thisLength=0;
     vPlainTextEdit * vPlainEdit = nullptr;
     //用于协议发送计时器
     QTimer    vQTimerTx;
@@ -75,7 +74,6 @@ public:
     void setPlainEdit(vPlainTextEdit * edit);
     void timerStart(void);
     void timerStop(void);
-    void vHeadCheck(void);
     void vUpdateShowBuff(const QString &currentTimer);
     void setQWidgetAddr(QWidget * addrTx,QWidget * addrRx);
     void setRxSeaskyAddr(QString * strF,QString * strN,QString * strU,float * addrF);

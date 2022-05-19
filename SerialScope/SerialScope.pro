@@ -34,6 +34,9 @@ SOURCES += \
     mainwindow.cpp \
     vAnsiBash/vansibash.cpp \
     vCsv/CSVHelper.cpp \
+    vSeaskyPort/Protocol/bsp_protocol_class.cpp \
+    vSeaskyPort/Protocol/crc/bsp_crc16.cpp \
+    vSeaskyPort/Protocol/crc/bsp_crc8.cpp \
     vSerialPortCfg/vcodeconverter.cpp \
     vSerialPortCfg/vqserialrxthread.cpp \
     vSerialPortCfg/vqserialtxthread.cpp \
@@ -51,8 +54,6 @@ SOURCES += \
     vQTextEdit/vqtextedit.cpp \
     vQWebEngineView/vqwebengineview.cpp \
     vQtConfig/vCombox.cpp \
-    vSeaskyPort/Protocol/CRC_Protocol/bsp_crc16.cpp \
-    vSeaskyPort/Protocol/CRC_Protocol/bsp_crc8.cpp \
     vSeaskyPort/Protocol/bsp_protocol.cpp \
     vSeaskyPort/vseaskyport.cpp \
     vTcp/vserverthread.cpp \
@@ -68,6 +69,9 @@ HEADERS += \
     mainwindow.h \
     vAnsiBash/vansibash.h \
     vCsv/CSVHelper.h \
+    vSeaskyPort/Protocol/bsp_protocol_class.h \
+    vSeaskyPort/Protocol/crc/bsp_crc16.h \
+    vSeaskyPort/Protocol/crc/bsp_crc8.h \
     vSerialPortCfg/vcodeconverter.h \
     vSerialPortCfg/vqserialrxthread.h \
     vSerialPortCfg/vqserialtxthread.h \
@@ -86,8 +90,6 @@ HEADERS += \
     vQTextEdit/vqtextedit.h \
     vQWebEngineView/vqwebengineview.h \
     vQtConfig/vCombox.h \
-    vSeaskyPort/Protocol/CRC_Protocol/bsp_crc16.h \
-    vSeaskyPort/Protocol/CRC_Protocol/bsp_crc8.h \
     vSeaskyPort/Protocol/bsp_protocol.h \
     vSeaskyPort/vseaskyport.h \
     vTcp/vserverthread.h \

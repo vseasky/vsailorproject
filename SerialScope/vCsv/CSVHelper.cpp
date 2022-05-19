@@ -188,7 +188,7 @@ int CSVHelper::SaveCSVtoFile(QList<QList<QString>> CSVData, QString CSVFilePath)
 			//将一行数据进行合并
 			QString str = CombineLine(CSVData[i]) + "\r\n";
 			//写入数据
-			CSVFile.write(str.toUtf8());			
+            CSVFile.write(str.toUtf8());
 		}
 		//关闭文件
 		CSVFile.close();

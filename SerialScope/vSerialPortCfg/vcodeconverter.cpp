@@ -16,7 +16,7 @@ QByteArray CodeDecoding(QByteArray const &qByteArr)
         case SerialShiftJIS   :tmpQStr = QTextCodec::codecForName("Shift-JIS")->toUnicode(qByteArr);
         default:;break;
     }
-    return tmpQStr.toLocal8Bit();
+    return tmpQStr.toUtf8();
 };
 //编码
 QByteArray CodeCoding(QByteArray const &qByteArr)

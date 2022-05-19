@@ -1,12 +1,11 @@
-#include "vSeaskyPort/Protocol/CRC_Protocol/bsp_crc8.h"
-
 /*
- * static uint8_t sht75_crc_table[];
- *
- * The SHT75 humidity sensor is capable of calculating an 8 bit CRC checksum to
- * ensure data integrity. The lookup table crc_table[] is used to recalculate
- * the CRC.
- */
+    @SEASKY---2022/03/23
+*/
+#include "bsp_crc8.h"
+
+/// <summary>
+/// 
+/// </summary>
 static uint8_t sht75_crc_table[] =
 {
     0,   49,  98,  83,  196, 245, 166, 151, 185, 136, 219, 234, 125, 76,  31,  46,
@@ -27,12 +26,12 @@ static uint8_t sht75_crc_table[] =
     130, 179, 224, 209, 70,  119, 36,  21,  59,  10,  89,  104, 255, 206, 157, 172
 };
 
-/*
- * uint8_t crc_8( const unsigned char *input_str, size_t num_bytes );
- *
- *函数crc_8()计算输入字符串的8位宽crc
- *给定长度。
- */
+/// <summary>
+/// 计算输入字符串的8位宽crc
+/// </summary>
+/// <param name="input_str"></param>
+/// <param name="num_bytes">给定长度</param>
+/// <returns></returns>
 uint8_t crc_8( const uint8_t *input_str,uint16_t num_bytes)
 {
     uint16_t a;
@@ -48,12 +47,12 @@ uint8_t crc_8( const uint8_t *input_str,uint16_t num_bytes)
     return crc;
 }
 
-/*
- * uint8_t update_crc_8( unsigned char crc, unsigned char val );
- *
- *给定一个数据字节和循环冗余校验值的前一个值
- *update_crc_8()计算并返回数据的新的实际crc值
- */
+/// <summary>
+/// 给定一个数据字节和循环冗余校验值的前一个值
+/// </summary>
+/// <param name="crc"></param>
+/// <param name="val"></param>
+/// <returns>计算并返回数据的新的实际crc值</returns>
 uint8_t update_crc_8(uint8_t crc, uint8_t val )
 {
     return sht75_crc_table[val ^ crc];

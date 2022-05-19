@@ -30,7 +30,7 @@ const qint16  SerialMutipSendNum = 200;//串口调试助手多条发送模式条
 const qint16  SerialLinuxNum     = 25;
 const qint32  SerialTxTimerCfg   = 100;//默认串口发送周期，可以通过spinBox调整
 const qint32  SeaskyPortNum      = 24; //最大支持的FLOAT数据长度
-const qint32  Utf8MaxLen         = 10+SeaskyPortNum*4;
+const qint32  Utf8MaxLen         = 12+SeaskyPortNum*4;
 const qint32  SeaskyTimer        = 100;//协议窗口数据刷新频率
 const QString FindSerialCommand  = "SerialCommand";
 const QString FindTcpCommand     = "TcpCommand";
@@ -151,10 +151,8 @@ void MainWindow::vDependenceAddr(void)
     /*波形显示控件波形名称查询地址*/
     ui->widgetScope->vSetNameAddr(&vRxName[0]);
     /*协议操作地址受此分配*/
-    this->vSerialCtr.vSeaskyPortCtr.vProtocol.rx_info.utf8_data = &vRxUtf8[0];
-    this->vSerialCtr.vSeaskyPortCtr.vProtocol.rx_info.data =     &vRxfloat[0];
-    this->vSerialCtr.vSeaskyPortCtr.vProtocol.tx_info.utf8_data = &vTxUtf8[0];
-    this->vSerialCtr.vSeaskyPortCtr.vProtocol.tx_info.data =     &vTxfloat[0];
+    this->vSerialCtr.vSeaskyPortCtr.vProtocol.ProtocolInitRx((uint32_t*)vRxfloat,vRxUtf8,SeaskyPortNum);
+    this->vSerialCtr.vSeaskyPortCtr.vProtocol.ProtocolInitTx((uint32_t*)vTxfloat,vTxUtf8,SeaskyPortNum);
     /*显示数据地址*/
     ui->plainTextRx->SetShowBuffAddr(&this->vSerialCtr.vSerial.vSerialData->RxBuff);
     //串口发送，hex格式共享，所有控件建议只读
@@ -1727,7 +1725,7 @@ void MainWindow::vImportLineText(QString str)
                {
                    if(i-1<SerialMutipSendNum)
                    {
-                       LineEditData[i-1] = vlist[i][vFindCom].toLocal8Bit();
+                       LineEditData[i-1] = vlist[i][vFindCom].toUtf8();
                        vTxHexEnableCfg();
                    }
                    else
@@ -1769,7 +1767,7 @@ bool MainWindow::eventFilter(QObject *object, QEvent *event)//步骤二
         if (e->key() == Qt::Key_Enter || e->key() == Qt::Key_Return)//步骤三
         {
             emit vWriteData(this->vLinuxTextEdit->toPlainText()
-                            .toLocal8Bit()+"\r\n");
+                            .toUtf8()+"\r\n");
             this->vLinuxTextEdit->clear();
             return true;
         }
@@ -1813,7 +1811,7 @@ void MainWindow::vServerLinuxCfg(void)
             Qt::QueuedConnection);
     connect(vpushButton,&QPushButton::released,[=]()
     {
-        emit vWriteData(vNtextEdit->toPlainText().toLocal8Bit()+"\r\n");
+        emit vWriteData(vNtextEdit->toPlainText().toUtf8()+"\r\n");
     });
     this->vLinuxTextEdit->setStyleSheet("background-color:#FFFFFF;"
                                         "color:#FF4500;");
@@ -1853,7 +1851,7 @@ void MainWindow::vServerLinuxCfg(void)
         });
         connect(vlineEdit,&vQLineEditHex::textChanged,[=]()
         {
-            vLinuxData[i]=vlineEdit->text().toLocal8Bit();
+            vLinuxData[i]=vlineEdit->text().toUtf8();
         });
         connect(this,&MainWindow::vLinuxShow,[=](){
             vlineEdit->setText(vLinuxData[i]);
@@ -2005,10 +2003,10 @@ void MainWindow::vTcpServerInit(void)
     ui->comboBoxTcpL->addItem("[ \\r\\n ]\t(CRLF)","\r\n");
     ui->comboBoxTcpL->addItem("[ \\n ]\t(LF)","\n");
     ui->comboBoxTcpL->addItem("[ } ]\t(JSON)","}");
-    this->vServerTcp.vServerTcpCtr.vServerTcp.vSetRxStampStr(ui->comboBoxTcpL->currentData().toString().toLocal8Bit());
+    this->vServerTcp.vServerTcpCtr.vServerTcp.vSetRxStampStr(ui->comboBoxTcpL->currentData().toString().toUtf8());
     connect(ui->comboBoxTcpL,&QComboBox::currentTextChanged,[=]()
     {
-        this->vServerTcp.vServerTcpCtr.vServerTcp.vSetRxStampStr(ui->comboBoxTcpL->currentData().toString().toLocal8Bit());
+        this->vServerTcp.vServerTcpCtr.vServerTcp.vSetRxStampStr(ui->comboBoxTcpL->currentData().toString().toUtf8());
     });
     /*配置接收时间戳处理*/
     connect(ui->vSreverRxTim,&QCheckBox::released,[=](){
@@ -2168,7 +2166,7 @@ void MainWindow::vImportTcpText(QString str)
                {
                    if(i-1<TcpServerMutipSendNum)
                    {
-                       vTcpLineEditData[i-1] = vlist[i][vFindCom].toLocal8Bit();
+                       vTcpLineEditData[i-1] = vlist[i][vFindCom].toUtf8();
                        vTcpHexEnableCfg();
                    }
                    else
@@ -2355,7 +2353,7 @@ void MainWindow::vTcpCfgUpdata(void)
     this->vServerTcp.vServerTcpCtr.vServerTcp.vTcpCodeMode =
             vSerialCodeModeEnum(ui->comboBoxServer6->currentData().toInt());
     //接收换行方式
-    this->vServerTcp.vServerTcpCtr.vServerTcp.vSetRxStampStr(ui->comboBoxTcpL->currentData().toString().toLocal8Bit());
+    this->vServerTcp.vServerTcpCtr.vServerTcp.vSetRxStampStr(ui->comboBoxTcpL->currentData().toString().toUtf8());
     //接收HEX格式使能
     this->vServerTcp.vServerTcpCtr.vServerTcp.vRxHexEnable = ui->vSreverRxHex->isChecked();
     //接收换行使能
