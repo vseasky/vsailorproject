@@ -16,13 +16,17 @@
 typedef struct
 {
     QString * vQString = nullptr; //float转str数据
-    QString * vName = nullptr;    //数据名称
-    QString * vUnit = nullptr;    //单位名称
-    float   * vFloat = nullptr;   //float数据
+    QString * vName   = nullptr;    //数据名称
+    QString * vUnit   = nullptr;    //单位名称
+    float   * vFloat  = nullptr;   //float数据
 
-    quint16   vCmdId;   //CMD ID
-    quint16   vReg;     //16位寄存器
-    qint16    vDataLen; //数据长度
+    /*字节偏移 4 -->> 字节大小 2*/
+    quint16     vEquipmentType; //设备类型
+    /*字节偏移 6 -->> 字节大小 2*/
+    quint16     vEquipmentId; 	 //设备ID
+    /*字节偏移 8 -->> 字节大小 data_len+2 */
+    quint16     vDataId; //数据ID
+    qint16      vDataLen; //数据长度
 }vSeaskyData;
 
 class vSeaskyPort : public QObject
@@ -37,15 +41,15 @@ public:
         vSerial = vSerial_t;
     }
     /*------------串口基础类，必须初始化------------*/
-    void vConnectRx(void);
-    void vDisConnectRx(void);
-    void vConnectTx(void);
-    void vDisConnectTx(void);
+    void vConnect(void);
+    void vDisConnect(void);
     QWidget        * vTxEdit = nullptr;
     QWidget        * vRxEdit = nullptr;
+    QWidget        * vTxEditScope = nullptr;
+    protocol_struct  * pTxProtocolLine = new protocol_struct();
     vSeaskyData vRxSeasky;
     vSeaskyData vTxSeasky;
-
+    vSeaskyData *vTxSeaskyLine;
     QVector<float> vRxdata;
     QVariant ShowQVariant;
 
@@ -55,12 +59,18 @@ public:
     ComCanClass vProtocol;
 
     bool      vQTimerEnable;
+    bool      vDataAutoTxEnable = false;
     QTimer    vQTimer;
     qint32    timerCntSet=100;
     vPlainTextEdit * vPlainEdit = nullptr;
+    bool           * vLineEditTxEnable = nullptr;
+    QMap<qint32,bool*> * vLineEditMap   = nullptr;
     //用于协议发送计时器
     QTimer    vQTimerTx;
     qint32    vQtimerTxCnt=100;
+    qint32    MultPleMaxCnt = 100;
+    qint32    timerCnt = 0;
+    qint32    currIndex = 0;
     void setTimer(qint32 Cnt)
     {
         timerCntSet = Cnt;
@@ -80,6 +90,9 @@ public:
     void setTxSeaskyAddr(QString * strF,QString * strN,QString * strU,float * addrF);
     void configQWidgetRx(qint32 num);
     void configQWidgetTx(qint32 num);
+    void configQWidgetEditTx(QWidget *pQWidget,qint32 numPort,qint32 num);
+    void vDataAutoTxLines(uint8_t index);
+    bool vLineEditTxCtr(void);
 public slots:
     void vSeaskyRxIRQ(void);
     void vSeaskyRxIRQ(const QByteArray &str);
@@ -89,6 +102,8 @@ private:
     qint32  vTxNumUTF8,vRxNumUTF8;
 public:
 signals:
+    void vQWidgetTxLineShow1(void);
+    void vQWidgetTxLineShow2(void);
     void vQWidgetRxShow(void);
     void vQWidgetTxShow(void);
     void textChanged(void);

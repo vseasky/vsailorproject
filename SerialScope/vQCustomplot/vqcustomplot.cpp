@@ -312,7 +312,7 @@ void vQCustomPlot::keyPressEvent(QKeyEvent *ev)
     }
     else if(key == myPlotShortcut.All_Shortcut)
     {
-        qDebug()<<"a";
+//        qDebug()<<"a";
     }
     if(key== Qt::Key_Control)
     {
@@ -354,7 +354,7 @@ void vQCustomPlot::keyReleaseEvent(QKeyEvent *ev)
     }
     else if(key == myPlotShortcut.All_Shortcut)
     {
-        qDebug()<<"a";
+//        qDebug()<<"a";
     }
     QCustomPlot::keyReleaseEvent(ev);
 }

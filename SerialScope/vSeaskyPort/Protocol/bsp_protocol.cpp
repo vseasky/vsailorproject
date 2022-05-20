@@ -9,10 +9,10 @@
 #include "bsp_protocol.h"
 #include "./crc/bsp_crc8.h"
 #include "./crc/bsp_crc16.h"
-
-
-#ifdef PROTOCOL_CPP_DEBUG
 #include "bsp_protocol_class.h"
+
+#ifdef PROTOCOL_CPP_CLR_DEBUG
+
 #elif PROTOCOL_C_DEBUG
 #define bsp_debug_c(Format, ...)   printf(Format, ##__VA_ARGS__)
 #else

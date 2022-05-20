@@ -21,6 +21,8 @@ protected:
 void paintEvent(QPaintEvent *event);
 signals:
 
+private:
+    int32_t MultPleMaxCnt;
 };
 
 #endif // VCUSTOMWIDGET_H

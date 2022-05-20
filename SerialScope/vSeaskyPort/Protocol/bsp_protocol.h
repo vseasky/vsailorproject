@@ -11,8 +11,6 @@ extern "C" {
 #include <string.h>
 
 
-//#define PROTOCOL_CPP_DEBUG
-
 #define PROTOCOL_HEAD_ID        0XA5
 #define PROTOCOL_HEAD_LEN       4
 #define PROTOCOL_DATA_OFFSET    10

@@ -50,8 +50,7 @@ public:
     QByteArray         * vLinuxData;//提供数据原始地址 使用NEW创建
     //基础功能的串口类
     vSerialCom    vSerialCtr;
-    bool          rxModeCfg = false;//是否使能协议
-    bool          txModeCfg = false;//是否使能协议
+    bool          vSeaskyMode = false;//是否使能协议
     //电脑信息
     vCafesClient  vCafes;
 

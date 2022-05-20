@@ -25,8 +25,9 @@ const qint32 vTimerRxPlainSeasky = 100;
 const qint32 vTimerRxSeasky      = 100;
 const qint32 vTimerRxScope       = 75;
 const qint32 vTimerRxPlainServer = 100;
-const qint16  TcpServerMutipSendNum = 200;//串口调试助手多条发送模式条目数量
-const qint16  SerialMutipSendNum = 200;//串口调试助手多条发送模式条目数量
+const qint16  TcpServerMutipSendNum = 200;      //串口调试助手多条发送模式条目数量
+const qint16  SerialMutipSendNum = 200;         //串口调试助手多条发送模式条目数量
+const qint16  SeaskyPortNumMutipSendNum = 100;  //串口协议最大存储命令数
 const qint16  SerialLinuxNum     = 25;
 const qint32  SerialTxTimerCfg   = 100;//默认串口发送周期，可以通过spinBox调整
 const qint32  SeaskyPortNum      = 24; //最大支持的FLOAT数据长度
@@ -139,8 +140,15 @@ void MainWindow::closeEvent(QCloseEvent *event)
 //0. 配置相关地址，应包含所有地址初始化操作
 void MainWindow::vDependenceAddr(void)
 {
+    /*波形显示控件波形名称查询地址*/
+    ui->widgetScope->vSetNameAddr(&vRxName[0]);
+    /*协议操作地址受此分配*/
+    this->vSerialCtr.vSeaskyPortCtr.vProtocol.ProtocolInitRx((uint32_t*)vRxfloat,vRxUtf8,SeaskyPortNum);
+    this->vSerialCtr.vSeaskyPortCtr.vProtocol.ProtocolInitTx((uint32_t*)vTxfloat,vTxUtf8,SeaskyPortNum);
+
     /*Seaky 协议使用相关数据*/
     //设置依赖的两个Widget 16进制显示窗口
+    this->vSerialCtr.vSeaskyPortCtr.configQWidgetEditTx(ui->scrollAreaWidgetContents_7,SeaskyPortNum,SeaskyPortNumMutipSendNum);
     this->vSerialCtr.vSeaskyPortCtr.setQWidgetAddr(
                 ui->scrollAreaWidgetContents_2,
                 ui->scrollAreaWidgetContents_3);
@@ -148,11 +156,7 @@ void MainWindow::vDependenceAddr(void)
                 &vRxQString[0],&vRxName[0],&vRxUnit[0],&vRxfloat[0]);
     this->vSerialCtr.vSeaskyPortCtr.setTxSeaskyAddr(
                 &vTxQString[0],&vTxName[0],&vTxUnit[0],&vTxfloat[0]);
-    /*波形显示控件波形名称查询地址*/
-    ui->widgetScope->vSetNameAddr(&vRxName[0]);
-    /*协议操作地址受此分配*/
-    this->vSerialCtr.vSeaskyPortCtr.vProtocol.ProtocolInitRx((uint32_t*)vRxfloat,vRxUtf8,SeaskyPortNum);
-    this->vSerialCtr.vSeaskyPortCtr.vProtocol.ProtocolInitTx((uint32_t*)vTxfloat,vTxUtf8,SeaskyPortNum);
+
     /*显示数据地址*/
     ui->plainTextRx->SetShowBuffAddr(&this->vSerialCtr.vSerial.vSerialData->RxBuff);
     //串口发送，hex格式共享，所有控件建议只读
@@ -313,6 +317,7 @@ void MainWindow::vLineEditShowInit(qint32 MultPleNum)
             &vQObjectTx::vLineEditTxOne,
             Qt::QueuedConnection);
 }
+
 /******************************************************************************************************/
 /**********************************************串口插拔检测**********************************************/
 /******************************************************************************************************/
@@ -704,6 +709,7 @@ void MainWindow::vInitSeasky(void)
     QRegExp regx1("([0][Xx][A-Fa-f0-9][A-Fa-f0-9][A-Fa-f0-9][A-Fa-f0-9])");
     QValidator *validator =
             new QRegExpValidator(regx1, this);
+    ui->lineEdit_2->setValidator(validator);
     ui->lineEdit_4->setValidator(validator);
     ui->lineEdit_6->setValidator(validator);
     QValidator *IntValidator=new QIntValidator(0,99,this);
@@ -711,6 +717,21 @@ void MainWindow::vInitSeasky(void)
     ui->lineEdit_8->setPlaceholderText("请输入1-255");
 //    ui->lineEdit_8->setValidator(validator2);
     /*-------------正则表达式,限制输入----------------*/
+    //TX的CMD_ID数据更新
+    connect(ui->lineEdit_2,&QLineEdit::editingFinished,[=]()
+    {
+        QByteArray addr;
+        QString str= ui->lineEdit_2->text();
+        if(str.length()==6)
+        {
+            addr=QByteArray::fromHex(
+                    ui->lineEdit_2->text().mid(2,6).toUtf8());
+            this->vSerialCtr.vSeaskyPortCtr.vTxSeasky.vEquipmentType =
+                    ((addr[1])& 0x00FF)|((addr[0] << 8) & 0xFF00);
+            //配置保存到配置文件
+            vSaveModule();
+        }
+    });
     //TX的CMD_ID数据更新
     connect(ui->lineEdit_4,&QLineEdit::editingFinished,[=]()
     {
@@ -720,7 +741,7 @@ void MainWindow::vInitSeasky(void)
         {
             addr=QByteArray::fromHex(
                     ui->lineEdit_4->text().mid(2,6).toUtf8());
-            this->vSerialCtr.vSeaskyPortCtr.vTxSeasky.vCmdId =
+            this->vSerialCtr.vSeaskyPortCtr.vTxSeasky.vEquipmentId =
                     ((addr[1])& 0x00FF)|((addr[0] << 8) & 0xFF00);
             //配置保存到配置文件
             vSaveModule();
@@ -735,7 +756,7 @@ void MainWindow::vInitSeasky(void)
         {
             addr=QByteArray::fromHex(
                     ui->lineEdit_6->text().mid(2,6).toUtf8());
-            this->vSerialCtr.vSeaskyPortCtr.vTxSeasky.vReg =
+            this->vSerialCtr.vSeaskyPortCtr.vTxSeasky.vDataId =
                     ((addr[1])& 0x00FF)|((addr[0] << 8) & 0xFF00);
             vSaveModule();
         }
@@ -773,6 +794,7 @@ void MainWindow::vInitSeasky(void)
             &this->vOpenGlWidget,
             &vOpenGlWidget::getCapeEuler,
             Qt::QueuedConnection);
+//    ui->widget_2->();
     //模型改变
     void (QComboBox::*vChanged)(int)=&QComboBox::activated;
     connect(ui->comboBox,vChanged,
@@ -781,20 +803,7 @@ void MainWindow::vInitSeasky(void)
     connect(&this->vSerialCtr.vSeaskyPortCtr,
             &vSeaskyPort::vInfoChanged,
             this,&MainWindow::vSaveModule);
-    //设置发送寄存器可以编译，接收寄存器不可以编辑
-    ui->widgetScope1->vSetButtonEnable(true);
-    ui->widgetScope2->vSetButtonEnable(false);
-    //设置按键颜色
-    ui->widgetScope1->setStyleSheet("background-color:#1296db;");
-    ui->widgetScope2->setStyleSheet("background-color:#d81e06;");
-    //发送寄存器改变，更新数据
-    connect(ui->widgetScope1,&vCustomWidget::vFlagChanged,[=]()
-    {
-        this->vSerialCtr.vSeaskyPortCtr.vTxSeasky.vReg
-                = ui->widgetScope1->flag_t;
-        //刷新界面
-        vPortShow();
-    });
+
     //清除数据
     connect(ui->pushButton,&QPushButton::released,
             ui->plainTextEdit,
@@ -852,8 +861,12 @@ void MainWindow::vInitControl(void)
             QString("background-image:url(:/image/image/v3d2.png);");
     ImagePath[3] =
             QString("background-image:url(:/image/image/v3d3.png);");
+
     QVBoxLayout   * vQVBoxLayout =
             new QVBoxLayout(ui->scrollAreaWidgetContents_4);
+
+    vQVBoxLayout->setAlignment(Qt::AlignTop);
+
     QPushButton   * vQPushButton1;
     QPushButton   * vQPushButton2;
     //创建8个
@@ -864,10 +877,10 @@ void MainWindow::vInitControl(void)
 
         vQPushButton1 = new QPushButton(vQWidget);
         vQPushButton2 = new QPushButton(vQWidget);
-        vQPushButton1->setMinimumSize(68,68);
-        vQPushButton1->setMaximumSize(68,68);
-        vQPushButton2->setMinimumSize(68,68);
-        vQPushButton2->setMaximumSize(68,68);
+        vQPushButton1->setMinimumSize(64,64);
+        vQPushButton1->setMaximumSize(64,64);
+        vQPushButton2->setMinimumSize(64,64);
+        vQPushButton2->setMaximumSize(64,64);
         vQPushButton1->setStyleSheet(ImagePath[2*i]);
         vQPushButton2->setStyleSheet(ImagePath[2*i+1]);
         vQHBoxLayout->addWidget(vQPushButton1);
@@ -1154,17 +1167,17 @@ void MainWindow::vStatusbarCfg(void)
             vInfo[i]->setFrameStyle(QFrame::Box|QFrame::Sunken);
             vQHBoxLayout->addWidget(vInfo[i]);
         }
-        vInfo[2]->setMinimumSize(72,0);
-        vInfo[2]->setMaximumSize(72,32);
-        vButton->setMinimumSize(32,0);
-        vButton->setMaximumSize(72,32);
+        vInfo[2]->setMinimumSize(96,0);
+        vInfo[2]->setMaximumSize(96,32);
+        vButton->setMinimumSize(96,0);
+        vButton->setMaximumSize(96,32);
         vButton->setText(QString::fromLocal8Bit("复位统计"));
         vQHBoxLayout->addWidget(vButton);
         vInfo[0]->setText(QString::fromLocal8Bit("接收统计:%1")
                           .arg(this->vSerialCtr.vSerial.vSerialData->rxByteCnt));
         vInfo[1]->setText(QString::fromLocal8Bit("发送统计:%1")
                           .arg(this->vSerialCtr.vSerial.vSerialData->txByteCnt));
-        vInfo[2]->setText(QString::fromLocal8Bit("<a href=\"https://seasky-master.github.io/SEASKY-Master/\">个人博客</a>"));
+        vInfo[2]->setText(QString::fromLocal8Bit("<a href=\"www.liuwei.vin\">个人博客</a>"));
         vInfo[2]->setOpenExternalLinks(true);//设置可以打开网站链接
         vQWidget->setLayout(vQHBoxLayout);   //显示永久信息
         ui->statusbar->setMinimumSize(512,44);
@@ -1263,46 +1276,45 @@ void MainWindow::vRxSlotChanged(void)
 {
     if(ui->pushButton_4->isChecked())
     {
-        this->rxModeCfg = true;
+        this->vSeaskyMode = true;
     }
     else
     {
-        this->rxModeCfg = false;
+        this->vSeaskyMode = false;
     }
-    if(this->rxModeCfg)//连接为协议接收
+    if(this->vSeaskyMode)//连接为协议接收
     {
-        //避免重复创建
+        //先断开所有，避免重复套用了链接
+        this->vSerialCtr.vQObjectTxCtr.vDisConnectTx();
         this->vSerialCtr.vQObjectRxCtr.vDisConnectRx();
-        this->vSerialCtr.vSeaskyPortCtr.vDisConnectRx();
-        this->vSerialCtr.vSeaskyPortCtr.vConnectRx();
+        this->vSerialCtr.vSeaskyPortCtr.vDisConnect();
+        this->vSerialCtr.vSeaskyPortCtr.vConnect();
+        ui->pushButton_3->setEnabled(true);
     }
     else //连接为串口调试助手接收
     {
-        //避免重复创建
+        ui->pushButton_3->setChecked(false);
+        ui->pushButton_3->setEnabled(false);
+        this->vSerialCtr.vQObjectTxCtr.vDisConnectTx();
         this->vSerialCtr.vQObjectRxCtr.vDisConnectRx();
-        this->vSerialCtr.vSeaskyPortCtr.vDisConnectRx();
+        this->vSerialCtr.vSeaskyPortCtr.vDisConnect();
         this->vSerialCtr.vQObjectRxCtr.vConnectRx();
+        this->vSerialCtr.vQObjectTxCtr.vConnectTx();
     }
+    vTxSlotChanged();
 }
 //根据配置更新槽函数,以及更新显示
 void MainWindow::vTxSlotChanged(void)
 {
-    if(txModeCfg)
+    if(vSeaskyMode)
     {
         //设置vQObjectTxCtr的发送定时器无法启动
         this->vSerialCtr.vQObjectTxCtr.vTimerStop();
         ui->checkBox_4->setChecked(false);
         ui->checkBox_4->setEnabled(false);
-        //先断开所有，避免重复套用了链接
-        this->vSerialCtr.vQObjectTxCtr.vDisConnectTx();
-        this->vSerialCtr.vSeaskyPortCtr.vDisConnectTx();
-        this->vSerialCtr.vSeaskyPortCtr.vConnectTx();
     }
     else
     {
-        this->vSerialCtr.vQObjectTxCtr.vDisConnectTx();
-        this->vSerialCtr.vSeaskyPortCtr.vDisConnectTx();
-        this->vSerialCtr.vQObjectTxCtr.vConnectTx();
         //恢复vQObjectTxCtr的发送定时器权力
         ui->checkBox_4->setEnabled(true);
     }
@@ -1334,31 +1346,34 @@ void MainWindow::vRxTimerStampChanged(void)
 //刷新协议帧头数据-RX
 void MainWindow::showRxHead(void)
 {
-    ui->widgetScope2->vSetFlag(this->vSerialCtr.vSeaskyPortCtr.vRxSeasky.vReg);
-    ui->lineEdit_12->setText("0X"+QString::number(this->vSerialCtr.vSeaskyPortCtr.vRxSeasky.vCmdId,
+    ui->lineEdit_10->setText("0X"+QString::number(this->vSerialCtr.vSeaskyPortCtr.vRxSeasky.vEquipmentType,
                                                   16).toUpper().rightJustified(4, QChar('0')));
-    ui->lineEdit_14->setText("0X"+QString::number(this->vSerialCtr.vSeaskyPortCtr.vRxSeasky.vReg,
+    ui->lineEdit_12->setText("0X"+QString::number(this->vSerialCtr.vSeaskyPortCtr.vRxSeasky.vEquipmentId,
+                                                  16).toUpper().rightJustified(4, QChar('0')));
+    ui->lineEdit_14->setText("0X"+QString::number(this->vSerialCtr.vSeaskyPortCtr.vRxSeasky.vDataId,
                                                   16).toUpper().rightJustified(4, QChar('0')));
     ui->lineEdit_16->setText(QString::number(this->vSerialCtr.vSeaskyPortCtr.vRxSeasky.vDataLen,10));
 }
 //刷新协议帧头数据-TX
 void MainWindow::showTxHead(void)
 {
-    ui->lineEdit_4->setText("0X"+QString::number(this->vSerialCtr.vSeaskyPortCtr.vTxSeasky.vCmdId,
+    ui->lineEdit_2->setText("0X"+QString::number(this->vSerialCtr.vSeaskyPortCtr.vTxSeasky.vEquipmentType,
                                                   16).toUpper().rightJustified(4, QChar('0')));
-    ui->lineEdit_6->setText("0X"+QString::number(this->vSerialCtr.vSeaskyPortCtr.vTxSeasky.vReg,
+    ui->lineEdit_4->setText("0X"+QString::number(this->vSerialCtr.vSeaskyPortCtr.vTxSeasky.vEquipmentId,
+                                                  16).toUpper().rightJustified(4, QChar('0')));
+    ui->lineEdit_6->setText("0X"+QString::number(this->vSerialCtr.vSeaskyPortCtr.vTxSeasky.vDataId,
                                                   16).toUpper().rightJustified(4, QChar('0')));
     ui->lineEdit_8->setText(QString::number(this->vSerialCtr.vSeaskyPortCtr.vTxSeasky.vDataLen,10));
 }
 //刷新协议寄存器数据
 void MainWindow::vPortShow(void)
 {
-    ui->widgetScope1->vSetFlag(this->vSerialCtr.vSeaskyPortCtr.vTxSeasky.vReg);
-    ui->widgetScope2->vSetFlag(this->vSerialCtr.vSeaskyPortCtr.vRxSeasky.vReg);
     showRxHead();
     showTxHead();
     emit this->vSerialCtr.vSeaskyPortCtr.vQWidgetRxShow();
     emit this->vSerialCtr.vSeaskyPortCtr.vQWidgetTxShow();
+    emit this->vSerialCtr.vSeaskyPortCtr.vQWidgetTxLineShow1();
+    emit this->vSerialCtr.vSeaskyPortCtr.vQWidgetTxLineShow2();
 }
 //刷新RxHexEnable
 void MainWindow::vRxHexEnableCfg(void)
@@ -1395,15 +1410,15 @@ void MainWindow::vTxModeCfg(void)
     {
         //按协议发送
         this->vSerialCtr.vQObjectTxCtr.vSerialTxMode = SerialAgr;
-        //协议使能
-        txModeCfg = true;
         this->vTxSlotChanged();
+        ui->pushButton_4->setEnabled(false);
         //模式改变，重启定时器
         this->vSerialCtr.vSeaskyPortCtr.vQTimerTxStop();
         this->vSerialCtr.vSeaskyPortCtr.vQTimerTxStart();
     }
     else
     {
+        ui->pushButton_4->setEnabled(true);
         if(!ui->checkBox_1->isChecked())
         {
             //单条发送
@@ -1414,8 +1429,6 @@ void MainWindow::vTxModeCfg(void)
             //多条发送
             this->vSerialCtr.vQObjectTxCtr.vSerialTxMode = SerialMul;
         }
-        //协议失能
-        txModeCfg = false;
         this->vTxSlotChanged();
         //关闭定时器，协议发送定时器
         this->vSerialCtr.vSeaskyPortCtr.vQTimerTxStop();
@@ -1437,7 +1450,7 @@ void MainWindow::vTxStampCfg(void)
 void MainWindow::vTxModeTimerCfg(void)
 {
     this->vSerialCtr.vQObjectTxCtr.vTimerSet(ui->spinBox->value());
-    if(!txModeCfg)
+    if(!vSeaskyMode)
     {
         if(ui->checkBox_4->isChecked())
         {
@@ -1495,11 +1508,15 @@ void MainWindow::vShowModule(qint16 index)
             settingsModule.value(QString("vFloatRx:%1").arg(i+1),
                                  QString("0").arg(i+1)).toFloat();
         }
-        this->vSerialCtr.vSeaskyPortCtr.vRxSeasky.vCmdId =
-            settingsModule.value(QString("vCmdIdRx"),
+
+        this->vSerialCtr.vSeaskyPortCtr.vRxSeasky.vEquipmentType =
+            settingsModule.value(QString("vEquipmentTypeRx"),
                                  QString("%1").arg(0X0001)).toUInt();
-        this->vSerialCtr.vSeaskyPortCtr.vRxSeasky.vReg =
-            settingsModule.value(QString("vRegRx"),
+        this->vSerialCtr.vSeaskyPortCtr.vRxSeasky.vEquipmentId =
+            settingsModule.value(QString("vEquipmentIdRx"),
+                                 QString("%1").arg(0X0001)).toUInt();
+        this->vSerialCtr.vSeaskyPortCtr.vRxSeasky.vDataId =
+            settingsModule.value(QString("vDataIdRx"),
                                  QString("%1").arg(0X00FF)).toUInt();
         this->vSerialCtr.vSeaskyPortCtr.vRxSeasky.vDataLen =
             settingsModule.value(QString("vDataLenRx"),
@@ -1520,15 +1537,53 @@ void MainWindow::vShowModule(qint16 index)
             settingsModule.value(QString("vFloatTx:%1").arg(i+1),
                                  QString("0").arg(i+1)).toFloat();
         }
-        this->vSerialCtr.vSeaskyPortCtr.vTxSeasky.vCmdId =
-            settingsModule.value(QString("vCmdIdTx"),
+        this->vSerialCtr.vSeaskyPortCtr.vTxSeasky.vEquipmentType =
+            settingsModule.value(QString("vEquipmentTypeTx"),
                                  QString("%1").arg(0X0001)).toUInt();
-        this->vSerialCtr.vSeaskyPortCtr.vTxSeasky.vReg =
-            settingsModule.value(QString("vRegTx"),
+        this->vSerialCtr.vSeaskyPortCtr.vTxSeasky.vEquipmentId =
+            settingsModule.value(QString("vEquipmentIdTx"),
+                                 QString("%1").arg(0X0001)).toUInt();
+        this->vSerialCtr.vSeaskyPortCtr.vTxSeasky.vDataId =
+            settingsModule.value(QString("vDataIdTx"),
                                  QString("%1").arg(0X00FF)).toUInt();
         this->vSerialCtr.vSeaskyPortCtr.vTxSeasky.vDataLen =
             settingsModule.value(QString("vDataLenTx"),
                                  QString("0")).toInt();
+
+
+        for(qint16 k=0;k<100;k++)
+        {
+            for(qint16 i=0;i<SeaskyPortNum;i++)
+            {
+                this->vSerialCtr.vSeaskyPortCtr.vTxSeaskyLine[k].vName[i] =
+                settingsModule.value(QString("vNameLineTx:(%1:%2)").arg(k+1).arg(i+1),
+                                     QString("Name:%1").arg(i+1)).toString();
+                this->vSerialCtr.vSeaskyPortCtr.vTxSeaskyLine[k].vUnit[i] =
+                settingsModule.value(QString("vUnitLineTx:(%1:%2)").arg(k+1).arg(i+1),
+                                     QString("Unit:%1").arg(i+1)).toString();
+                this->vSerialCtr.vSeaskyPortCtr.vTxSeaskyLine[k].vQString[i] =
+                settingsModule.value(QString("vQStringLineTx:(%1:%2)").arg(k+1).arg(i+1),
+                                     QString("0").arg(i+1)).toString();
+                this->vSerialCtr.vSeaskyPortCtr.vTxSeaskyLine[k].vFloat[i] =
+                settingsModule.value(QString("vFloatLineTx:(%1:%2)").arg(k+1).arg(i+1),
+                                     QString("0").arg(i+1)).toFloat();
+            }
+            this->vSerialCtr.vSeaskyPortCtr.vTxSeaskyLine[k].vEquipmentType =
+                settingsModule.value(QString("vEquipmentTypeLineTx:%1").arg(k+1),
+                                     QString("%1").arg(0X0001)).toUInt();
+            this->vSerialCtr.vSeaskyPortCtr.vTxSeaskyLine[k].vEquipmentId =
+                settingsModule.value(QString("vEquipmentIdLineTx:%1").arg(k+1),
+                                     QString("%1").arg(0X0001)).toUInt();
+            this->vSerialCtr.vSeaskyPortCtr.vTxSeaskyLine[k].vDataId =
+                settingsModule.value(QString("vDataIdLineTx:%1").arg(k+1),
+                                     QString("%1").arg(0X00FF)).toUInt();
+            this->vSerialCtr.vSeaskyPortCtr.vTxSeaskyLine[k].vDataLen =
+                settingsModule.value(QString("vDataLenLineTx:%1").arg(k+1),
+                                     QString("0")).toInt();
+        }
+
+
+
         settingsModule.endGroup();
         vPortShow();
     }
@@ -1578,6 +1633,7 @@ void MainWindow::vSaveModule(void)
                 ui->comboBox->currentText()+".ini";
         QSettings settingsModule(path,QSettings::IniFormat);
         settingsModule.beginGroup("Module");
+
         for(qint16 i=0;i<SeaskyPortNum;i++)
         {
             settingsModule.setValue(QString("vNameTx:%1").arg(i+1),
@@ -1589,10 +1645,12 @@ void MainWindow::vSaveModule(void)
             settingsModule.setValue(QString("vFloatTx:%1").arg(i+1),
                                     this->vSerialCtr.vSeaskyPortCtr.vTxSeasky.vFloat[i]);
         }
-        settingsModule.setValue(QString("vCmdIdTx"),
-                                this->vSerialCtr.vSeaskyPortCtr.vTxSeasky.vCmdId);
-        settingsModule.setValue(QString("vRegTx"),
-                                this->vSerialCtr.vSeaskyPortCtr.vTxSeasky.vReg);
+        settingsModule.setValue(QString("vEquipmentTypeTx"),
+                                this->vSerialCtr.vSeaskyPortCtr.vTxSeasky.vEquipmentType);
+        settingsModule.setValue(QString("vEquipmentIdTx"),
+                                this->vSerialCtr.vSeaskyPortCtr.vTxSeasky.vEquipmentId);
+        settingsModule.setValue(QString("vDataIdTx"),
+                                this->vSerialCtr.vSeaskyPortCtr.vTxSeasky.vDataId);
         settingsModule.setValue(QString("vDataLenTx"),
                                 this->vSerialCtr.vSeaskyPortCtr.vTxSeasky.vDataLen);
         for(qint16 i=0;i<SeaskyPortNum;i++)
@@ -1606,13 +1664,36 @@ void MainWindow::vSaveModule(void)
             settingsModule.setValue(QString("vFloatRx:%1").arg(i+1),
                                     this->vSerialCtr.vSeaskyPortCtr.vRxSeasky.vFloat[i]);
         }
-        settingsModule.setValue(QString("vCmdIdRx"),
-                                this->vSerialCtr.vSeaskyPortCtr.vRxSeasky.vCmdId);
-        settingsModule.setValue(QString("vRegRx"),
-                                this->vSerialCtr.vSeaskyPortCtr.vRxSeasky.vReg);
+        settingsModule.setValue(QString("vEquipmentTypeRx"),
+                                this->vSerialCtr.vSeaskyPortCtr.vRxSeasky.vEquipmentType);
+        settingsModule.setValue(QString("vEquipmentIdRx"),
+                                this->vSerialCtr.vSeaskyPortCtr.vRxSeasky.vEquipmentId);
+        settingsModule.setValue(QString("vDataIdRx"),
+                                this->vSerialCtr.vSeaskyPortCtr.vRxSeasky.vDataId);
         settingsModule.setValue(QString("vDataLenRx"),
                                 this->vSerialCtr.vSeaskyPortCtr.vRxSeasky.vDataLen);
-
+        for(uint8_t j=0;j<100;j++)
+        {
+            for(qint16 i=0;i<SeaskyPortNum;i++)
+            {
+                settingsModule.setValue(QString("vNameLineTx:(%1:%2)").arg(j+1).arg(i+1),
+                                        this->vSerialCtr.vSeaskyPortCtr.vTxSeaskyLine[j].vName[i]);
+                settingsModule.setValue(QString("vUnitLineTx:(%1:%2)").arg(j+1).arg(i+1),
+                                        this->vSerialCtr.vSeaskyPortCtr.vTxSeaskyLine[j].vUnit[i]);
+                settingsModule.setValue(QString("vQStringLineTx:(%1:%2)").arg(j+1).arg(i+1),
+                                        this->vSerialCtr.vSeaskyPortCtr.vTxSeaskyLine[j].vQString[i]);
+                settingsModule.setValue(QString("vFloatLineTx:(%1:%2)").arg(j+1).arg(i+1),
+                                        this->vSerialCtr.vSeaskyPortCtr.vTxSeaskyLine[j].vFloat[i]);
+            }
+            settingsModule.setValue(QString("vEquipmentTypeLineTx:%1").arg(j+1),
+                                    this->vSerialCtr.vSeaskyPortCtr.vTxSeaskyLine[j].vEquipmentType);
+            settingsModule.setValue(QString("vEquipmentIdLineTx:%1").arg(j+1),
+                                    this->vSerialCtr.vSeaskyPortCtr.vTxSeaskyLine[j].vEquipmentId);
+            settingsModule.setValue(QString("vDataIdLineTx:%1").arg(j+1),
+                                    this->vSerialCtr.vSeaskyPortCtr.vTxSeaskyLine[j].vDataId);
+            settingsModule.setValue(QString("vDataLenLineTx:%1").arg(j+1),
+                                    this->vSerialCtr.vSeaskyPortCtr.vTxSeaskyLine[j].vDataLen);
+        }
         settingsModule.endGroup();
     }
 }
