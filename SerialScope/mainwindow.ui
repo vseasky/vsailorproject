@@ -621,8 +621,8 @@
                    <rect>
                     <x>0</x>
                     <y>0</y>
-                    <width>790</width>
-                    <height>203</height>
+                    <width>98</width>
+                    <height>28</height>
                    </rect>
                   </property>
                  </widget>
@@ -657,8 +657,8 @@
                    <rect>
                     <x>0</x>
                     <y>0</y>
-                    <width>790</width>
-                    <height>203</height>
+                    <width>98</width>
+                    <height>28</height>
                    </rect>
                   </property>
                  </widget>
@@ -1615,8 +1615,8 @@
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>350</width>
-                   <height>382</height>
+                   <width>98</width>
+                   <height>28</height>
                   </rect>
                  </property>
                 </widget>
@@ -1656,8 +1656,8 @@
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>350</width>
-                   <height>382</height>
+                   <width>98</width>
+                   <height>28</height>
                   </rect>
                  </property>
                 </widget>
@@ -1727,8 +1727,8 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>158</width>
-                  <height>142</height>
+                  <width>84</width>
+                  <height>28</height>
                  </rect>
                 </property>
                </widget>
@@ -1793,8 +1793,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>912</width>
-             <height>254</height>
+             <width>98</width>
+             <height>28</height>
             </rect>
            </property>
           </widget>
@@ -2735,6 +2735,11 @@ p, li { white-space: pre-wrap; }
  </widget>
  <customwidgets>
   <customwidget>
+   <class>vQTextBrowserHtml</class>
+   <extends>QTextBrowser</extends>
+   <header location="global">vqtextbrowserhtml.h</header>
+  </customwidget>
+  <customwidget>
    <class>vCombox</class>
    <extends>QComboBox</extends>
    <header location="global">vCombox.h</header>
@@ -2760,11 +2765,6 @@ p, li { white-space: pre-wrap; }
    <extends>QWidget</extends>
    <header location="global">vqwebengineview.h</header>
    <container>1</container>
-  </customwidget>
-  <customwidget>
-   <class>vQTextBrowserHtml</class>
-   <extends>QTextBrowser</extends>
-   <header location="global">vqtextbrowserhtml.h</header>
   </customwidget>
  </customwidgets>
  <resources/>

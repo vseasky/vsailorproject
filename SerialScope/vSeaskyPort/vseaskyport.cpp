@@ -606,47 +606,60 @@ void vSeaskyPort::vSeaskyRxIRQ(void)
 //由于追求极高的解析效率，嵌入式端尽可能打包发送，异常断帧情况将极大的影响程序效率，甚至于造成程序崩溃
 void vSeaskyPort::vSeaskyRxIRQ(const QByteArray &str)
 {
+    int Ret = -1;
+    static uint32_t total_read_len;     //总读取长度
+    static uint32_t reality_read_len;   //实际读取长度
+    static uint32_t ready_parse_len;	//预解析数据长度
     //检验数据帧头,帧头固定为(0XA5),同时务必确认帧头与上一帧数据有时差
-    if((str.at(0)==char(0XA5)))
+    vRxBuff.append(str);
+    //缓冲区总数据长度
+    total_read_len = vRxBuff.length();
+    //准备解析的数据长度
+    reality_read_len = total_read_len;
+    while(reality_read_len>0)
     {
-        vRxBuff = str;
-    }
-    else if(vRxBuff.at(0)==char(0XA5))
-    {
-        vRxBuff.append(str);
-    }
-    //数据帧协议解析，以及判断，需要先具备10个字符，即包含完整的帧头，帧尾数据
-    if((vRxBuff.at(0)==char(0XA5))
-         &&(vRxBuff.length()>=12))
-    {
-        //协议处理，如果现有数据大于数据帧长度
-        memcpy(&this->vProtocol.pRxProtocol->message_st.pData[0],&((uint8_t*)(vRxBuff.data()))[0],vRxBuff.length());
-        if(parse_protocol(this->vProtocol.pRxProtocol,vRxBuff.length())==PROTOCOL_RESULT_OK)
+        //准备解析的数据长度
+        if((reality_read_len)>this->vProtocol.pRxProtocol->message_st.max_data_len)
         {
-                //获取接收数据的时间戳
-                QString timeString;
-                timeString = QDateTime::currentDateTime().toString("[yyyy-MM-dd hh:mm:ss.zzz]\n");
-                /*获取CMDID*/
-                /*加入显示*/
-                vUpdateShowBuff(timeString);
-                /*加入示波器*/
-                this->vRxdata.clear();
-                for(qint8 i=0;i<this->vProtocol.pRxProtocol->frame_st.frame_user.cmd_data.data_len;i++)
-                {
-                   this->vRxdata.append(((float*)this->vProtocol.pRxProtocol->frame_st.frame_user.cmd_data.pData)[i]);
-                }
-                //删除已使用
-                vRxBuff.remove(0,this->vProtocol.pRxProtocol->message_st.data_len);
-                //待接收长度清零
-                this->vProtocol.pRxProtocol->message_st.data_len = 0;
-                //如果有数据未处理
-                if(vRxBuff.length()>=12)
-                {
-                    vSeaskyRxIRQ(vRxBuff);
-                }
+            ready_parse_len = this->vProtocol.pRxProtocol->message_st.max_data_len;
+        }
+        else
+        {
+            ready_parse_len = (reality_read_len);
+        }
+        //协议处理，如果现有数据大于数据帧长度
+        memcpy(&this->vProtocol.pRxProtocol->message_st.pData[0],&((uint8_t*)(vRxBuff.data()))[0],ready_parse_len);
+        Ret = parse_protocol(this->vProtocol.pRxProtocol,ready_parse_len);
+        if(Ret != PROTOCOL_RESULT_OK)
+        {
+            if(vRxBuff.at(0)!=char(PROTOCOL_HEAD_ID))
+            {
+                vRxBuff.clear();
             }
-        return;
+            break;
+        }
+        else
+        {
+            //解析数据成功
+            QString timeString;
+            timeString = QDateTime::currentDateTime().toString("[yyyy-MM-dd hh:mm:ss.zzz]\n");
+            /*获取CMDID*/
+            /*加入显示*/
+            vUpdateShowBuff(timeString);
+            /*加入示波器*/
+            this->vRxdata.clear();
+            for(qint8 i=0;i<this->vProtocol.pRxProtocol->frame_st.frame_user.cmd_data.data_len;i++)
+            {
+               this->vRxdata.append(((float*)this->vProtocol.pRxProtocol->frame_st.frame_user.cmd_data.pData)[i]);
+            }
+            //删除已使用
+            vRxBuff.remove(0,this->vProtocol.pRxProtocol->message_st.data_len);
+            //待接收长度清零
+            this->vProtocol.pRxProtocol->message_st.data_len = 0;
+        }
+        reality_read_len = vRxBuff.length();
     }
+
 }
 void vSeaskyPort::setPlainEdit(vPlainTextEdit * edit)
 {

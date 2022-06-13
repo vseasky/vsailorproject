@@ -99,7 +99,6 @@ namespace ComCanProtocol
 			static bool     BleIsOpen = false;							//蓝牙打开标志
 			static bool     pCanReceiveCppPointerIsEnable = false;
 			static bool     pCanComDebugIsEnable = false;
-			const  uint16_t SerialProtocolLen = 20;						//串口数据帧长度
 			static uint16_t can_equipment_type;
 			static vSerialPort* vSerialPortClass = new vSerialPort();
 			void  CanRxCallBack(void);

@@ -5,11 +5,12 @@
 #ifndef __MICROLIB 
 #include <malloc.h >
 #include <memory.h>
+#include "bsp_protocol_class.h"
 #endif
 #include "bsp_protocol.h"
 #include "./crc/bsp_crc8.h"
 #include "./crc/bsp_crc16.h"
-#include "bsp_protocol_class.h"
+
 
 #ifdef PROTOCOL_CPP_CLR_DEBUG
 

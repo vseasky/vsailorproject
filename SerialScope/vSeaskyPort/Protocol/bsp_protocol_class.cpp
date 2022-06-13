@@ -269,26 +269,35 @@ namespace ComCanProtocol
 		static uint32_t total_read_len;     //总读取长度
 		static uint32_t reality_read_len;   //实际读取长度
 		static uint32_t parse_pos;          //数据解析指针
+		static uint32_t ready_parse_len;	//预解析数据长度
 		uint32_t ready_read_len = 0;
 		static double start_time = GetTickCount();
 		static double read_time = GetTickCount();
 		static double end_time = GetTickCount();
 		while (SerialIsOpen == true)
-		{
+		{     
 			if (vSerialPortClass->isOpened())
 			{
 				total_read_len = 0;
-				//读取当前数据，不考虑被截断，只考虑被组合
+				//读取当前数据
 				total_read_len = vSerialPortClass->getSerialReceiveLen();
-				curr_read_len = total_read_len - last_len;
-				//curr_read_len = vSerialPortClass->readData(&((char*)tRxBuffer)[total_read_len], TX_RX_BUFFER_SIZE-total_read_len);
+				curr_read_len  = total_read_len - last_len;
 				end_time = GetTickCount();
 				//距离上一次读到数据的时间
-				if (((end_time - start_time) > 16))
+				if (((end_time - start_time) >= 16)||(total_read_len >= 12))
 				{
-					//无论是否有数据都需要进行 readData ，以清除错误标志
-					ready_read_len = SerialProtocolLen * (total_read_len / SerialProtocolLen);
-					reality_read_len = vSerialPortClass->readData(&((char*)tRxBuffer)[0], SerialProtocolLen * (total_read_len / SerialProtocolLen));
+					//无论是否有数据都需要进行readData ，以清除错误标志
+					if (total_read_len < TX_RX_BUFFER_SIZE)
+					{
+						//数据长度必然是 12+4n
+						ready_read_len = 4*((int)((total_read_len - 12) / 4)) + 12;
+						reality_read_len = vSerialPortClass->readData(&((char*)tRxBuffer)[0], ready_read_len);
+					}
+					else
+					{
+						ready_read_len	= (TX_RX_BUFFER_SIZE - 12) / 4 + 12;
+						reality_read_len = vSerialPortClass->readData(&((char*)tRxBuffer)[0], ready_read_len);
+					}
 					//存在待读取数据
 					if (reality_read_len > 0)
 					{
@@ -296,12 +305,40 @@ namespace ComCanProtocol
 						//等待解析完所有数据
 						while ((parse_pos < reality_read_len))
 						{
-							memcpy(&pRxProtocol->message_st.pData[0], &tRxBuffer[parse_pos], reality_read_len - parse_pos);
-							Ret = parse_protocol(pRxProtocol, reality_read_len - parse_pos);
+							//(reality_read_len - parse_pos) 为剩余未解析数据长度
+							if ((reality_read_len - parse_pos)> pRxProtocol->message_st.max_data_len)
+							{
+								ready_parse_len = pRxProtocol->message_st.max_data_len;
+							}
+							else
+							{
+								ready_parse_len = reality_read_len - parse_pos;
+							}
+							memcpy(&pRxProtocol->message_st.pData[0], &tRxBuffer[parse_pos],ready_parse_len);
+							Ret = parse_protocol(pRxProtocol,ready_parse_len);
+							//解析数据失败
 							if (Ret != PROTOCOL_RESULT_OK)
 							{
+								//清除接收缓冲区数据
+								vSerialPortClass->clearRxBuffer();
 								total_read_len = vSerialPortClass->getSerialReceiveLen();
-								vSerialPortClass->readData(&((char*)tRxBuffer)[0], total_read_len);
+								//解析数据失败，清空缓冲区数据
+								while (total_read_len != 0)
+								{
+									//检测接收缓冲区是否已经为空，如果不为空则采用读取方式清空
+									if (total_read_len < TX_RX_BUFFER_SIZE)
+									{
+										//数据长度必然是 12+4n
+										ready_read_len = (total_read_len - 12) / 4 + 12;
+										reality_read_len = vSerialPortClass->readData(&((char*)tRxBuffer)[0], ready_read_len);
+									}
+									else
+									{
+										ready_read_len = (TX_RX_BUFFER_SIZE - 12) / 4 + 12;
+										reality_read_len = vSerialPortClass->readData(&((char*)tRxBuffer)[0], ready_read_len);
+									}
+									total_read_len = vSerialPortClass->getSerialReceiveLen();
+								}
 								//直接认为解析完成
 								bsp_debug_c(LOG_LEVEL_ERROR, "ReceiveTask Parse Err!\n");
 								bsp_debug_c(LOG_LEVEL_ERROR, "Clear RaedBuffer Len [%d]!\n", total_read_len);
@@ -310,24 +347,33 @@ namespace ComCanProtocol
 							}
 							else
 							{
+								//解析数据成功
 								bsp_debug_c(LOG_LEVEL_DEBUG, "CanRxCallBack [%d]!\n", reality_read_len);
 								CanRxCallBack();
 							}
+
 							//移动到下一个未解析数据
 							parse_pos += pRxProtocol->message_st.data_len;
-							read_time = GetTickCount();
+							if (parse_pos >= reality_read_len)
+							{
+								//解析完已读数据
+								break;
+							}
+
 							//解析数据超时
+							read_time = GetTickCount();
 							if ((read_time - end_time) > 32)
 							{
 								//直接认为解析完成
-								bsp_debug_c(LOG_LEVEL_ERROR, "Parse Data Time Out [%d]!\n", read_time - end_time);
-								parse_pos = total_read_len;
+								bsp_debug_c(LOG_LEVEL_ERROR, "Parse Data Time Out [%f],parse_pos[%d],reality_read_len[%d]!\n", read_time - end_time, parse_pos, reality_read_len);
+								parse_pos = reality_read_len;
 								break;
 							}
 						}
 						total_read_len = 0;
 					}
 				}
+
 				//长度发生改变，更新等待时间起始值
 				if (curr_read_len > 0)
 				{
