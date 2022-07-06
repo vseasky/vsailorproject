@@ -21,7 +21,7 @@
        <bool>true</bool>
       </property>
       <property name="currentIndex">
-       <number>5</number>
+       <number>0</number>
       </property>
       <property name="iconSize">
        <size>
@@ -621,8 +621,8 @@
                    <rect>
                     <x>0</x>
                     <y>0</y>
-                    <width>98</width>
-                    <height>28</height>
+                    <width>790</width>
+                    <height>203</height>
                    </rect>
                   </property>
                  </widget>
@@ -657,8 +657,8 @@
                    <rect>
                     <x>0</x>
                     <y>0</y>
-                    <width>98</width>
-                    <height>28</height>
+                    <width>790</width>
+                    <height>203</height>
                    </rect>
                   </property>
                  </widget>
