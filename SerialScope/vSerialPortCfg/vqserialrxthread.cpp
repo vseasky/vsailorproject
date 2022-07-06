@@ -41,8 +41,8 @@ void vQObjectRx::vReadSlot(void)
             }
             else if(start_line>=0)
             {
-                vAnsiBash vAnsiBash_t;
-                //bool      isConvertio=false;
+                vAnsiBash  vAnsiBash_t;
+                //bool    isConvertio=false;
                 //带"\n"一起复制进去
                 vRxSerialBuff.append(vReadAll.mid(0,start_line+1));
                 //vAnsiBash_t.vAnsiColor(&vRxSerialBuff,&isConvertio);

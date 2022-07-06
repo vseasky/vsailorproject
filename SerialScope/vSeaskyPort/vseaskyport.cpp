@@ -603,7 +603,7 @@ void vSeaskyPort::vSeaskyRxIRQ(void)
         }
     }
 }
-//由于追求极高的解析效率，嵌入式端尽可能打包发送，异常断帧情况将极大的影响程序效率，甚至于造成程序崩溃
+
 void vSeaskyPort::vSeaskyRxIRQ(const QByteArray &str)
 {
     int Ret = -1;
@@ -659,8 +659,9 @@ void vSeaskyPort::vSeaskyRxIRQ(const QByteArray &str)
         }
         reality_read_len = vRxBuff.length();
     }
-
 }
+
+
 void vSeaskyPort::setPlainEdit(vPlainTextEdit * edit)
 {
     static bool hexEnable = false;
@@ -798,8 +799,6 @@ void vSeaskyPort::vDataAutoTxLines(uint8_t index)
                     pTxProtocolLine->message_st.data_len);
         emit vSerialTx(vSeaskyTxBuff);
     }
-
-
 }
 vSeaskyPortQThread::vSeaskyPortQThread(QObject *parent) : QThread(parent)
 {

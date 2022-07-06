@@ -16,7 +16,6 @@ extern "C" {
 #define PROTOCOL_DATA_OFFSET    10
 #define MAX_BUFFER_SIZE         128
 
-
 #define LOG_LEVEL_DEBUG (1<<0)
 #define LOG_LEVEL_INFO_ (1<<1)
 #define LOG_LEVEL_WARN_ (1<<2)
