@@ -139,7 +139,7 @@
 
 ---------------------------------------
 
-## 给作者加鸡腿！
+## 制作不宜，还是少白嫖比较好，给作者加鸡腿！
 | 支付宝                         | 微信                           |
 |--------------------------------|--------------------------------|
-| <img src="image/seaskyr1.jpg"> | <img src="image/seaskyr2.jpg"> |
+| <img src="http://www.seasky.website/images/money/alipay.png"> | <img src="http://www.seasky.website/images/money/wechat.png"> |
