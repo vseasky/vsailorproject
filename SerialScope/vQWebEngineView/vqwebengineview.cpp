@@ -32,7 +32,7 @@ vQWebEngineView::vQWebEngineView(QWidget *parent) : QWidget(parent)
     view = new QWebEngineView(vQWidget2);
     vQWidget2->setAutoFillBackground(true);
 //    view->page()->settings()->setAttribute(QWebEngineSettings::ShowScrollBars,false);
-    view->load(QUrl("http://www.seasky.website/book/vSailorProject/_book/"));
+    view->load(QUrl("http://www.seasky.website/book/vSailorProject/"));
     view->showMaximized();
     vQVBoxLayout->addWidget(vQWidget);
     vQVBoxLayout->addWidget(vQWidget2);

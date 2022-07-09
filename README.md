@@ -2,7 +2,10 @@
 
 # 软件说明文档
 
-[Sailor Project 软件说明 ](https://seasky-master.github.io/html/seasky_works/SailorProject/SailorProject.html)
+[Sailor Project 软件说明(不再更新)](https://seasky-master.github.io/html/seasky_works/SailorProject/SailorProject.html)
+
+[Sailor Project 软件说明](http://www.seasky.website/book/vSailorProject/)
+
 
 # SerialScope Plus
 - 程序打包命令 `windeployqt`
@@ -140,6 +143,6 @@
 ---------------------------------------
 
 ## 制作不宜，还是少白嫖比较好，给作者加鸡腿！
-| 支付宝                                                        | 微信                                                          |
-| ------------------------------------------------------------- | ------------------------------------------------------------- |
+| 支付宝                                                                      | 微信                                                                        |
+| --------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
 | <img src="http://www.seasky.website/images/money/alipay.png" width="300px"> | <img src="http://www.seasky.website/images/money/wechat.png" width="300px"> |
