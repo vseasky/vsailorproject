@@ -8,7 +8,7 @@
 
 
 # SerialScope Plus
-- 程序打包命令 `windeployqt`
+- 程序打包命令 `windeployqt vSailorProject.exe`
 
 # 提示
 

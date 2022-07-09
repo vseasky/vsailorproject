@@ -1,6 +1,6 @@
 ﻿#include "mainwindow.h"
 #include <QApplication>
-const QString SerialScopeVersion = "Sailor Project V0.1.0";
+const QString SerialScopeVersion = "Sailor Project V0.1.1";
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
