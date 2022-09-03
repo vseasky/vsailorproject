@@ -2,7 +2,6 @@
 
 # 软件说明文档
 
-[Sailor Project 软件说明(不再更新)](https://seasky-master.github.io/html/seasky_works/SailorProject/SailorProject.html)
 
 [Sailor Project 软件说明](http://www.seasky.website/book/vSailorProject/)
 
