@@ -1,6 +1,6 @@
 ﻿#include "mainwindow.h"
 #include <QApplication>
-const QString SerialScopeVersion = "Sailor Project V0.1.1";
+const QString SerialScopeVersion = "Sailor";
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
@@ -13,7 +13,7 @@ int main(int argc, char *argv[])
         QString stylesheet = filetext.readAll();
         qApp->setStyleSheet(stylesheet);
     }
-    a.setWindowIcon(QIcon(":/image/image/main.ico"));
+    a.setWindowIcon(QIcon(":/image/image/favicon.ico"));
     w.setWindowTitle(SerialScopeVersion);
     w.show();
     return a.exec();

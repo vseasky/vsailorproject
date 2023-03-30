@@ -2,7 +2,7 @@ QT += core gui serialport opengl concurrent network
 QT += webenginewidgets
 
 TARGET = vSailorProject
-RC_ICONS = image\main.ico
+RC_ICONS = image\favicon.ico
 #DEFINES += QT_NO_DEBUG_OUTPUT #不使用qdebug
 
 CONFIG += c++11

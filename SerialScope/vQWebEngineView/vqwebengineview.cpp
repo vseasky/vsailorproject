@@ -32,7 +32,7 @@ vQWebEngineView::vQWebEngineView(QWidget *parent) : QWidget(parent)
     view = new QWebEngineView(vQWidget2);
     vQWidget2->setAutoFillBackground(true);
 //    view->page()->settings()->setAttribute(QWebEngineSettings::ShowScrollBars,false);
-    view->load(QUrl("http://www.seasky.website/book/vSailorProject/"));
+    view->load(QUrl("https://docs.liuwei.vin/projects/sailor/"));
     view->showMaximized();
     vQVBoxLayout->addWidget(vQWidget);
     vQVBoxLayout->addWidget(vQWidget2);
@@ -51,7 +51,7 @@ vQWebEngineView::vQWebEngineView(QWidget *parent) : QWidget(parent)
         vhtmlStr = vHtmlAddr->text();
         if(vhtmlStr.indexOf("://")==-1)
         {
-            vhtmlStr = "http://" + vhtmlStr;
+            vhtmlStr = "https://" + vhtmlStr;
         }
         view->load(QUrl(vhtmlStr));
     });
@@ -73,7 +73,7 @@ vQWebEngineView::vQWebEngineView(QWidget *parent) : QWidget(parent)
         vhtmlStr = vHtmlAddr->text();
         if(vhtmlStr.indexOf("://")==-1)
         {
-            vhtmlStr = "http://" + vhtmlStr;
+            vhtmlStr = "https://" + vhtmlStr;
         }
         view->load(QUrl(vhtmlStr));
     });

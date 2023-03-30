@@ -3,8 +3,7 @@
 # 软件说明文档
 
 
-[Sailor Project 软件说明](http://www.seasky.website/book/vSailorProject/)
-
+[Sailor Project 软件说明](https://docs.liuwei.vin/projects/sailor/)
 
 # SerialScope Plus
 - 程序打包命令 `windeployqt vSailorProject.exe`
@@ -16,7 +15,7 @@
 
 ## 记录
 - 2021/7/7 日
-    
+  
     准备重新编写SerialScope软件
 
     - 拟定加入功能
@@ -141,3 +140,4 @@
 
 - 2022/9/3
   - 添加 NET 6.0 和 NET Framework 4.8 版本的 C# 调用的动态链接库
+  - **OpenGL-使用Assimp加载3d模型**
